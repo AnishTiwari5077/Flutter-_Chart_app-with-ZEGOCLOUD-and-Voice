@@ -1,5 +1,3 @@
-// lib/widgets/reaction_picker.dart
-
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -25,7 +23,7 @@ class ReactionPicker extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
         borderRadius: BorderRadius.circular(30),
@@ -37,13 +35,15 @@ class ReactionPicker extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        alignment: WrapAlignment.center,
         children: quickReactions.map((emoji) {
           return GestureDetector(
             onTap: () => onReactionSelected(emoji),
-            child: Container(
-              padding: const EdgeInsets.all(8),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
               child: Text(emoji, style: const TextStyle(fontSize: 24)),
             ),
           );
