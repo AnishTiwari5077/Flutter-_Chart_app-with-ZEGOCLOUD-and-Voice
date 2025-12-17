@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "441627342788",
+    "firebase_url": "https://chart-app11-default-rtdb.firebaseio.com",
+    "project_id": "chart-app11",
+    "storage_bucket": "chart-app11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441627342788:android:33081af5638276074ed691",
+        "android_client_info": {
+          "package_name": "com.example.chart_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2u-NDY_ysubP4zMsRKfHBKeppkMeVjYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441627342788:android:2fee085dac46ec7d4ed691",
+        "android_client_info": {
+          "package_name": "com.example.my_chart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2u-NDY_ysubP4zMsRKfHBKeppkMeVjYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441627342788:android:bde2d07da73a9a004ed691",
+        "android_client_info": {
+          "package_name": "com.example.new_chart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2u-NDY_ysubP4zMsRKfHBKeppkMeVjYY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
