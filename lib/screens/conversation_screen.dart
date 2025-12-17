@@ -1087,10 +1087,11 @@ class MessageBubble extends StatelessWidget {
 ///
 // lib/screens/conversation_screen.dart (Part 4 - MessageOptionsSheet Widget)
 
-// 🆕 Message Options Bottom Sheet
+/// 🆕 Message Options Bottom Sheet
 class _MessageOptionsSheet extends StatelessWidget {
   final MessageModel message;
   final bool isMyMessage;
+
   final Function(String emoji) onReactionSelected;
   final VoidCallback onReply;
   final VoidCallback? onEdit;
@@ -1098,6 +1099,7 @@ class _MessageOptionsSheet extends StatelessWidget {
   final VoidCallback onCopy;
 
   const _MessageOptionsSheet({
+    super.key,
     required this.message,
     required this.isMyMessage,
     required this.onReactionSelected,
@@ -1121,7 +1123,7 @@ class _MessageOptionsSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag handle
+            // ── Drag Handle ───────────────────────────────
             Container(
               width: 40,
               height: 4,
@@ -1132,7 +1134,7 @@ class _MessageOptionsSheet extends StatelessWidget {
               ),
             ),
 
-            // 🆕 Reaction picker
+            // ── Emoji Reaction Picker ─────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: ReactionPicker(onReactionSelected: onReactionSelected),
@@ -1140,20 +1142,22 @@ class _MessageOptionsSheet extends StatelessWidget {
 
             const Divider(height: 1),
 
-            // 🆕 Message action options
+            // ── Actions ──────────────────────────────────
             _buildOption(
               context,
               icon: Icons.reply_rounded,
               label: 'Reply',
               onTap: onReply,
             ),
+
             if (onEdit != null && message.type == MessageType.text)
               _buildOption(
                 context,
                 icon: Icons.edit_rounded,
                 label: 'Edit',
-                onTap: () => onEdit,
+                onTap: onEdit,
               ),
+
             if (message.type == MessageType.text)
               _buildOption(
                 context,
@@ -1161,14 +1165,13 @@ class _MessageOptionsSheet extends StatelessWidget {
                 label: 'Copy',
                 onTap: onCopy,
               ),
+
             if (onDelete != null)
               _buildOption(
                 context,
                 icon: Icons.delete_rounded,
                 label: 'Delete',
-                onTap: () => onDelete,
-
-                //  onTap: onDelete,
+                onTap: onDelete,
                 isDestructive: true,
               ),
 
@@ -1179,11 +1182,12 @@ class _MessageOptionsSheet extends StatelessWidget {
     );
   }
 
+  // ✅ FIXED: onTap is nullable
   Widget _buildOption(
     BuildContext context, {
     required IconData icon,
     required String label,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
     bool isDestructive = false,
   }) {
     final theme = Theme.of(context);
@@ -1204,7 +1208,7 @@ class _MessageOptionsSheet extends StatelessWidget {
               : (isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight),
         ),
       ),
-      onTap: onTap,
+      onTap: onTap, // ✅ SAFE & ANALYZER-APPROVED
     );
   }
 }
