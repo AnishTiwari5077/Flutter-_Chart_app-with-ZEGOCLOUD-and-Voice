@@ -1,8 +1,11 @@
+// lib/providers/chart_provider.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:new_chart/models/chart_model.dart';
 import 'package:new_chart/services/notification_services.dart';
+import 'package:new_chart/services/message_service.dart';
 import 'package:uuid/uuid.dart';
 import '../models/message_model.dart';
 import '../models/user_model.dart';
@@ -30,7 +33,6 @@ final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
               .whereType<ChatModel>()
               .toList();
 
-          // Sort by last message time
           chats.sort((a, b) {
             if (a.lastMessageTime == null) return 1;
             if (b.lastMessageTime == null) return -1;
@@ -72,6 +74,11 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
       });
 });
 
+// 🆕 Message service provider
+final messageServiceProvider = Provider<MessageService>((ref) {
+  return MessageService();
+});
+
 final chatServiceProvider = Provider((ref) => ChatService(ref));
 
 class ChatService {
@@ -81,6 +88,7 @@ class ChatService {
 
   ChatService(this.ref);
 
+  // 🆕 UPDATED: Send message with reply support
   Future<void> sendMessage({
     required String chatId,
     required String receiverId,
@@ -88,6 +96,9 @@ class ChatService {
     required MessageType type,
     String? mediaUrl,
     String? fileName,
+    String? replyToMessageId,
+    String? replyToContent,
+    String? replyToSenderId,
   }) async {
     try {
       final currentUser = ref.read(currentUserProvider).value;
@@ -103,9 +114,11 @@ class ChatService {
         timestamp: DateTime.now(),
         isRead: false,
         mediaUrl: mediaUrl,
+        replyToMessageId: replyToMessageId,
+        replyToContent: replyToContent,
+        replyToSenderId: replyToSenderId,
       );
 
-      // Add message to subcollection
       await _firestore
           .collection('chats')
           .doc(chatId)
@@ -113,7 +126,6 @@ class ChatService {
           .doc(messageId)
           .set(message.toMap());
 
-      // Update chat document
       await _firestore.collection('chats').doc(chatId).update({
         'lastMessage': _getLastMessagePreview(type, content),
         'lastMessageTime': message.timestamp.millisecondsSinceEpoch,
@@ -123,7 +135,6 @@ class ChatService {
         'updatedAt': message.timestamp.millisecondsSinceEpoch,
       });
 
-      // Send push notification
       final receiverDoc = await _firestore
           .collection('users')
           .doc(receiverId)
@@ -156,7 +167,6 @@ class ChatService {
         'unreadCount.$currentUserId': 0,
       });
 
-      // Mark individual messages as read
       final messages = await _firestore
           .collection('chats')
           .doc(chatId)
@@ -190,7 +200,6 @@ class ChatService {
       }
       await batch.commit();
 
-      // Update chat document
       await _firestore.collection('chats').doc(chatId).update({
         'lastMessage': null,
         'lastMessageTime': null,
@@ -210,11 +219,9 @@ class ChatService {
 
       final chatId = generateChatId(currentUser.uid, otherUserId);
 
-      // Check if chat exists
       final chatDoc = await _firestore.collection('chats').doc(chatId).get();
 
       if (!chatDoc.exists) {
-        // Get other user's data
         final otherUserDoc = await _firestore
             .collection('users')
             .doc(otherUserId)
@@ -226,7 +233,6 @@ class ChatService {
 
         final otherUser = UserModel.fromMap(otherUserDoc.data()!);
 
-        // Create new chat
         await _firestore.collection('chats').doc(chatId).set({
           'chatId': chatId,
           'participants': [currentUser.uid, otherUserId],
