@@ -1,3 +1,5 @@
+// lib/repositories/storage_repository.dart
+
 import 'dart:io';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +10,6 @@ class StorageRepository {
   final CloudinaryPublic _cloudinary;
   final Uuid _uuid = const Uuid();
 
-  // Initialize with your Cloudinary credentials
   StorageRepository({required String cloudName, required String uploadPreset})
     : _cloudinary = CloudinaryPublic(cloudName, uploadPreset, cache: false);
 
@@ -18,7 +19,6 @@ class StorageRepository {
       debugPrint('📤 Starting avatar upload for user: $uid');
       debugPrint('   File path: ${file.path}');
 
-      // Verify file exists
       if (!await file.exists()) {
         throw Exception('Image file does not exist at path: ${file.path}');
       }
@@ -26,7 +26,6 @@ class StorageRepository {
       final fileSize = await file.length();
       debugPrint('   File size: ${fileSize / 1024} KB');
 
-      // Upload to Cloudinary
       final response = await _cloudinary.uploadFile(
         CloudinaryFile.fromFile(
           file.path,
@@ -50,56 +49,6 @@ class StorageRepository {
     }
   }
 
-  /// Upload chat media (images, videos)
-  Future<String> uploadChatMedia({
-    required String chatId,
-    required File file,
-    required String fileType, // 'image', 'video', etc.
-  }) async {
-    try {
-      debugPrint('📤 Starting chat media upload for chat: $chatId');
-      debugPrint('   File type: $fileType');
-      debugPrint('   File path: ${file.path}');
-
-      // Verify file exists
-      if (!await file.exists()) {
-        throw Exception('Media file does not exist');
-      }
-
-      final fileSize = await file.length();
-      debugPrint('   File size: ${fileSize / (1024 * 1024)} MB');
-
-      // Generate unique message ID
-      final messageId = _uuid.v4();
-      final fileName = path.basenameWithoutExtension(file.path);
-
-      // Determine resource type
-      final resourceType = _getResourceType(fileType);
-
-      // Upload to Cloudinary
-      final response = await _cloudinary.uploadFile(
-        CloudinaryFile.fromFile(
-          file.path,
-          folder: 'chat_media/$chatId',
-          publicId: '${messageId}_$fileName',
-          resourceType: resourceType,
-        ),
-      );
-
-      debugPrint('✅ Chat media uploaded successfully');
-      debugPrint('   Public ID: ${response.publicId}');
-
-      return response.secureUrl;
-    } on CloudinaryException catch (e) {
-      debugPrint('❌ Cloudinary error: ${e.message}');
-      throw Exception('Failed to upload media: ${e.message}');
-    } catch (e) {
-      debugPrint('❌ Chat media upload error: $e');
-      rethrow;
-    }
-  }
-
-  /// Upload with progress tracking
   Future<String> uploadAvatarWithProgress(
     String uid,
     File file,
@@ -129,12 +78,57 @@ class StorageRepository {
     }
   }
 
+  /// Upload chat media (images, videos, voice messages)
+  Future<String> uploadChatMedia({
+    required String chatId,
+    required File file,
+    required String fileType, // 'image', 'video', 'voice', etc.
+  }) async {
+    try {
+      debugPrint('📤 Starting chat media upload for chat: $chatId');
+      debugPrint('   File type: $fileType');
+      debugPrint('   File path: ${file.path}');
+
+      if (!await file.exists()) {
+        throw Exception('Media file does not exist');
+      }
+
+      final fileSize = await file.length();
+      debugPrint('   File size: ${fileSize / (1024 * 1024)} MB');
+
+      final messageId = _uuid.v4();
+      final fileName = path.basenameWithoutExtension(file.path);
+
+      // Determine resource type
+      final resourceType = _getResourceType(fileType);
+
+      final response = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          file.path,
+          folder: 'chat_media/$chatId',
+          publicId: '${messageId}_$fileName',
+          resourceType: resourceType,
+        ),
+      );
+
+      debugPrint('✅ Chat media uploaded successfully');
+      debugPrint('   Public ID: ${response.publicId}');
+
+      return response.secureUrl;
+    } on CloudinaryException catch (e) {
+      debugPrint('❌ Cloudinary error: ${e.message}');
+      throw Exception('Failed to upload media: ${e.message}');
+    } catch (e) {
+      debugPrint('❌ Chat media upload error: $e');
+      rethrow;
+    }
+  }
+
   /// Delete file from Cloudinary
   Future<void> deleteFile(String url) async {
     try {
       debugPrint('🗑️ Attempting to delete file: ${url.substring(0, 50)}...');
 
-      // Extract public ID from URL
       final publicId = _extractPublicIdFromUrl(url);
 
       if (publicId == null) {
@@ -143,13 +137,9 @@ class StorageRepository {
       }
 
       debugPrint('   Public ID: $publicId');
-
-      // Note: Deleting requires authenticated requests
-      // You'll need to use Cloudinary Admin API or delete from backend
       debugPrint('⚠️ Deletion requires Admin API - implement on backend');
     } catch (e) {
       debugPrint('❌ Delete error: $e (ignoring)');
-      // Ignore deletion errors as specified
     }
   }
 
@@ -183,6 +173,12 @@ class StorageRepository {
       case 'mov':
       case 'avi':
         return CloudinaryResourceType.Video;
+      case 'voice': // 🆕 Voice messages are raw audio files
+      case 'audio':
+      case 'm4a':
+      case 'mp3':
+      case 'wav':
+        return CloudinaryResourceType.Raw;
       case 'raw':
       default:
         return CloudinaryResourceType.Raw;
@@ -192,21 +188,17 @@ class StorageRepository {
   /// Extract public ID from Cloudinary URL
   String? _extractPublicIdFromUrl(String url) {
     try {
-      // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/{resource_type}/upload/v{version}/{public_id}.{format}
       final uri = Uri.parse(url);
       final pathSegments = uri.pathSegments;
 
-      // Find 'upload' segment
       final uploadIndex = pathSegments.indexOf('upload');
       if (uploadIndex == -1 || uploadIndex + 2 >= pathSegments.length) {
         return null;
       }
 
-      // Get segments after 'upload' and version
       final publicIdSegments = pathSegments.sublist(uploadIndex + 2);
       final publicIdWithExtension = publicIdSegments.join('/');
 
-      // Remove file extension
       final lastDotIndex = publicIdWithExtension.lastIndexOf('.');
       if (lastDotIndex != -1) {
         return publicIdWithExtension.substring(0, lastDotIndex);
@@ -238,7 +230,6 @@ class StorageRepository {
       transformations.add('q_$quality');
       transformations.add('f_$format');
 
-      // This is a simplified version - you may need to adjust based on your Cloudinary setup
       return url.replaceFirst(
         '/upload/',
         '/upload/${transformations.join(',')}/',

@@ -1,6 +1,12 @@
 // lib/models/message_model.dart
 
-enum MessageType { text, image, video, audio, file }
+enum MessageType {
+  text,
+  image,
+  video,
+  file,
+  voice, // 🆕 NEW: Voice message type
+}
 
 class MessageModel {
   final String messageId;
@@ -11,9 +17,10 @@ class MessageModel {
   final DateTime timestamp;
   final bool isRead;
   final String? mediaUrl;
+  final String? fileName; // 🆕 NEW: For voice duration (e.g., "45s")
 
-  // 🆕 NEW FIELDS FOR REACTIONS & REPLIES
-  final Map<String, List<String>>? reactions; // emoji: [userId1, userId2]
+  // Reactions & Replies
+  final Map<String, List<String>>? reactions;
   final String? replyToMessageId;
   final String? replyToContent;
   final String? replyToSenderId;
@@ -29,6 +36,7 @@ class MessageModel {
     required this.timestamp,
     this.isRead = false,
     this.mediaUrl,
+    this.fileName,
     this.reactions,
     this.replyToMessageId,
     this.replyToContent,
@@ -47,6 +55,7 @@ class MessageModel {
       'timestamp': timestamp.toIso8601String(),
       'isRead': isRead,
       'mediaUrl': mediaUrl,
+      'fileName': fileName,
       'reactions': reactions,
       'replyToMessageId': replyToMessageId,
       'replyToContent': replyToContent,
@@ -64,10 +73,12 @@ class MessageModel {
       content: map['content'] as String,
       type: MessageType.values.firstWhere(
         (e) => e.toString().split('.').last == map['type'],
+        orElse: () => MessageType.text,
       ),
       timestamp: DateTime.parse(map['timestamp'] as String),
       isRead: map['isRead'] as bool? ?? false,
       mediaUrl: map['mediaUrl'] as String?,
+      fileName: map['fileName'] as String?,
       reactions: map['reactions'] != null
           ? Map<String, List<String>>.from(
               (map['reactions'] as Map).map(
@@ -95,6 +106,7 @@ class MessageModel {
     DateTime? timestamp,
     bool? isRead,
     String? mediaUrl,
+    String? fileName,
     Map<String, List<String>>? reactions,
     String? replyToMessageId,
     String? replyToContent,
@@ -111,6 +123,7 @@ class MessageModel {
       timestamp: timestamp ?? this.timestamp,
       isRead: isRead ?? this.isRead,
       mediaUrl: mediaUrl ?? this.mediaUrl,
+      fileName: fileName ?? this.fileName,
       reactions: reactions ?? this.reactions,
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       replyToContent: replyToContent ?? this.replyToContent,

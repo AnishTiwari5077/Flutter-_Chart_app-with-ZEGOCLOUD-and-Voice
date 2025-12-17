@@ -271,7 +271,7 @@ class ChatService {
         return '📷 Image';
       case MessageType.video:
         return '🎥 Video';
-      case MessageType.audio:
+      case MessageType.voice:
         return '🎵 Audio';
       case MessageType.file:
         return '📎 File';

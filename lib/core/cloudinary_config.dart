@@ -10,11 +10,11 @@ class CloudinaryConfig {
   // Get these from your Cloudinary dashboard
   // https://cloudinary.com/console
   static const String cloudName = 'dbllcmni2'; // e.g., 'dxxxxx'
-  static const String uploadPreset = 'flutter_present'; // e.g., 'my_app_preset'
+  static const String uploadPreset = 'new_chart'; // e.g., 'my_app_preset'
 
   // Optional: API Key and Secret (for backend operations)
-  static const String apiKey = '892336869665979';
-  static const String apiSecret = '84oTVFESrL7ZVxBWPuxK1wmo8Tk';
+  static const String apiKey = '314485714938889';
+  static const String apiSecret = 'hS5Yvzqo4a7ywFBXc0uRmproVFQ';
 }
 
 // ==========================================

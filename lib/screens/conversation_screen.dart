@@ -19,6 +19,8 @@ import 'package:new_chart/widgets/reply_preview.dart';
 
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import '../../models/user_model.dart';
+import '../widgets/voice_recorder_button.dart';
+import '../widgets/voice_message_bubble.dart';
 import '../../models/message_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/storage_repository.dart';
@@ -87,55 +89,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     } finally {
       setState(() => _isSending = false);
     }
-  }
-
-  // 🆕 SHOW EMOJI PICKER (SEND EMOJI)
-  Future<void> _showEmojiPicker() async {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Drag handle
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: ReactionPicker(
-                  onReactionSelected: (emoji) {
-                    Navigator.pop(context);
-                    _sendEmojiMessage(emoji);
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _markMessagesAsRead() async {
@@ -334,13 +287,61 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     ErrorHandler.showSuccessSnackBar(context, 'Copied to clipboard');
   }
 
+  /// Send voice message
+  Future<void> _sendVoiceMessage(String audioPath, Duration duration) async {
+    setState(() => _isSending = true);
+
+    try {
+      final storageRepo = StorageRepository(
+        cloudName: 'dbllcmni2',
+        uploadPreset: 'new_chart',
+      );
+
+      final file = File(audioPath);
+      final audioUrl = await storageRepo.uploadChatMedia(
+        chatId: widget.chatId,
+        file: file,
+        fileType: 'voice',
+      );
+
+      await ref
+          .read(chatServiceProvider)
+          .sendMessage(
+            chatId: widget.chatId,
+            receiverId: widget.friend.uid,
+            content: 'Voice message',
+            type: MessageType.voice,
+            mediaUrl: audioUrl,
+            fileName: '${duration.inSeconds}s',
+          );
+
+      // Delete temporary file
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      if (mounted) {
+        ErrorHandler.showSuccessSnackBar(context, 'Voice message sent');
+      }
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+    } finally {
+      setState(() => _isSending = false);
+    }
+  }
+
   Future<void> _sendMediaMessage(MessageType type, File file) async {
     setState(() => _isSending = true);
 
     try {
       final storageRepo = StorageRepository(
         cloudName: 'dbllcmni2',
-        uploadPreset: 'flutter_present',
+        uploadPreset: 'new_chart',
       );
       final mediaUrl = await storageRepo.uploadChatMedia(
         chatId: widget.chatId,
@@ -874,17 +875,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                     tooltip: 'Attach file',
                   ),
                   const SizedBox(width: 4),
-                  IconButton(
-                    icon: Icon(
-                      Icons.emoji_flags_outlined,
-                      color: theme.colorScheme.primary,
-                      size: 28,
-                    ),
-                    onPressed: _showEmojiPicker,
-                    tooltip: 'Add emoji',
-                  ),
-
-                  const SizedBox(width: 4),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -911,6 +901,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                         style: theme.textTheme.bodyLarge,
                         maxLines: null,
                         textCapitalization: TextCapitalization.sentences,
+                        onChanged: (value) => setState(
+                          () {},
+                        ), // Rebuild to show/hide voice button
                       ),
                     ),
                   ),
@@ -929,6 +922,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                         ),
                       ),
                     )
+                  else if (_messageController.text.isEmpty)
+                    VoiceRecorderButton(onRecordingComplete: _sendVoiceMessage)
                   else
                     Container(
                       decoration: BoxDecoration(
@@ -978,7 +973,7 @@ class MessageBubble extends StatelessWidget {
   final Function(MessageModel message) onLongPress;
 
   const MessageBubble({
-    Key? key,
+    super.key,
     required this.message,
     required this.isMe,
     required this.theme,
@@ -986,7 +981,7 @@ class MessageBubble extends StatelessWidget {
     required this.currentUserId,
     required this.onReaction,
     required this.onLongPress,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1083,6 +1078,23 @@ class MessageBubble extends StatelessWidget {
                     ),
                     fit: BoxFit.cover,
                   ),
+                )
+              else if (message.type == MessageType.voice &&
+                  message.mediaUrl != null)
+                VoiceMessageBubble(
+                  audioUrl: message.mediaUrl!,
+                  duration: message.fileName != null
+                      ? Duration(
+                          seconds:
+                              int.tryParse(
+                                message.fileName!.replaceAll('s', ''),
+                              ) ??
+                              0,
+                        )
+                      : null,
+                  isMe: isMe,
+                  theme: theme,
+                  isDark: isDark,
                 )
               else
                 Text(
