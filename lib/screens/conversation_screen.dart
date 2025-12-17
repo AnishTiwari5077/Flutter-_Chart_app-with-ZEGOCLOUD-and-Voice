@@ -62,6 +62,82 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     super.dispose();
   }
 
+  // 🆕 SEND EMOJI AS MESSAGE
+  Future<void> _sendEmojiMessage(String emoji) async {
+    if (_isSending) return;
+
+    setState(() => _isSending = true);
+
+    try {
+      await ref
+          .read(chatServiceProvider)
+          .sendMessage(
+            chatId: widget.chatId,
+            receiverId: widget.friend.uid,
+            content: emoji,
+            type: MessageType.text, // emoji is text
+          );
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+    } finally {
+      setState(() => _isSending = false);
+    }
+  }
+
+  // 🆕 SHOW EMOJI PICKER (SEND EMOJI)
+  Future<void> _showEmojiPicker() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: ReactionPicker(
+                  onReactionSelected: (emoji) {
+                    Navigator.pop(context);
+                    _sendEmojiMessage(emoji);
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _markMessagesAsRead() async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser != null) {
@@ -798,6 +874,17 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                     tooltip: 'Attach file',
                   ),
                   const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(
+                      Icons.add_circle_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 28,
+                    ),
+                    onPressed: _showEmojiPicker,
+                    tooltip: 'Add emoji',
+                  ),
+
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
@@ -1099,7 +1186,6 @@ class _MessageOptionsSheet extends StatelessWidget {
   final VoidCallback onCopy;
 
   const _MessageOptionsSheet({
-    super.key,
     required this.message,
     required this.isMyMessage,
     required this.onReactionSelected,
