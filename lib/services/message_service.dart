@@ -34,18 +34,30 @@ class MessageService {
         reactions[key] = List<String>.from(value);
       });
 
-      if (reactions.containsKey(emoji)) {
-        if (!reactions[emoji]!.contains(userId)) {
+      // 🆕 STEP 1: Remove user's previous reaction from all emojis
+      String? userPreviousEmoji;
+      reactions.forEach((existingEmoji, users) {
+        if (users.contains(userId)) {
+          userPreviousEmoji = existingEmoji;
+        }
+      });
+
+      // If user had a previous reaction, remove it
+      if (userPreviousEmoji != null) {
+        reactions[userPreviousEmoji]!.remove(userId);
+        if (reactions[userPreviousEmoji]!.isEmpty) {
+          reactions.remove(userPreviousEmoji);
+        }
+      }
+
+      // 🆕 STEP 2: If clicking same emoji as before, just remove (toggle off)
+      // If clicking different emoji, add the new one
+      if (userPreviousEmoji != emoji) {
+        if (reactions.containsKey(emoji)) {
           reactions[emoji]!.add(userId);
         } else {
-          // Remove reaction if already exists (toggle)
-          reactions[emoji]!.remove(userId);
-          if (reactions[emoji]!.isEmpty) {
-            reactions.remove(emoji);
-          }
+          reactions[emoji] = [userId];
         }
-      } else {
-        reactions[emoji] = [userId];
       }
 
       transaction.update(messageRef, {'reactions': reactions});

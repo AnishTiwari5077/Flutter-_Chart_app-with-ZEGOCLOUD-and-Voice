@@ -876,7 +876,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   const SizedBox(width: 4),
                   IconButton(
                     icon: Icon(
-                      Icons.add_circle_rounded,
+                      Icons.emoji_flags_outlined,
                       color: theme.colorScheme.primary,
                       size: 28,
                     ),
