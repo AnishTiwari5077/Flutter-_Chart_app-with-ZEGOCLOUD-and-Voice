@@ -1,286 +1,272 @@
-💬 MyChart - Professional Flutter Chat Application
+# 💬 MyChart — Professional Flutter Chat Application
 
-A feature-rich, real-time messaging application built with Flutter, Firebase, and Riverpod. Experience seamless communication with text messages, voice notes, media sharing, video/audio calls, message reactions, and much more.
+A **feature-rich, real-time messaging application** built with **Flutter**, **Firebase**, and **Riverpod**. MyChart delivers seamless communication with text messages, voice notes, media sharing, video/audio calls, message reactions, and more.
 
+---
 
+## 📱 Features
 
-📱 Features
-✨ Core Messaging Features
+### ✨ Core Messaging
 
-Real-time Messaging - Instant text messages with live updates
-Voice Messages - Record and send high-quality voice notes with duration display
-Message Reactions - React to messages with emojis (❤️ 👍 😂 😮 😢 🙏 🔥 🎉)
-Reply to Messages - Quote and reply to specific messages with preview
-Message Editing - Edit sent messages with "edited" indicator
-Message Deletion - Delete messages from conversation
-Copy Messages - Copy message text to clipboard
-Read Receipts - Double checkmarks for read messages
-Typing Indicators - See when friends are typing (optional feature)
-Online Status - Real-time online/offline indicators
-Last Seen - View when users were last active.
+* **Real-time Messaging** — Instant text messages with live updates
+* **Voice Messages** — Record and send high-quality voice notes with duration display
+* **Message Reactions** — React with emojis (❤️ 👍 😂 😮 😢 🙏 🔥 🎉)
+* **Reply to Messages** — Quote and reply with message preview
+* **Edit Messages** — Edit sent messages with an *edited* indicator
+* **Delete Messages** — Remove messages from conversations
+* **Copy Messages** — Copy message text to clipboard
+* **Read Receipts** — Double checkmarks for read status
+* **Typing Indicators** — See when friends are typing *(optional)*
+* **Online Status** — Real-time online/offline indicators
+* **Last Seen** — View users’ last active time
 
-📱 Features
-✨ Core Messaging Features
+### 📎 Media & Calls
 
-Real-time Messaging - Instant text messages with live updates
-Voice Messages - Record and send high-quality voice notes with duration display
-Message Reactions - React to messages with emojis (❤️ 👍 😂 😮 😢 🙏 🔥 🎉)
-Reply to Messages - Quote and reply to specific messages with preview
-Message Editing - Edit sent messages with "edited" indicator
-Message Deletion - Delete messages from conversation
-Copy Messages - Copy message text to clipboard
-Read Receipts - Double checkmarks for read messages
-Typing Indicators - See when friends are typing (optional feature)
-Online Status - Real-time online/offline indicators
-Last Seen - View when users were last active
+* Image & media sharing
+* Audio calls
+* Video calls (powered by **Zego Cloud**)
 
+---
 
-🚀 Getting Started
-Prerequisites
-Ensure you have the following installed:
+## 🚀 Getting Started
 
-Flutter SDK 3.19.0 or higher
-Dart SDK 3.3.0 or higher
-Android Studio / VS Code with Flutter extensions
-Xcode (for iOS development, macOS only)
-Firebase Account (Create one here)
-Zego Cloud Account (Sign up here)
-Cloudinary Account (Register here)
+### ✅ Prerequisites
 
+Make sure you have the following installed:
 
-📥 Installation
-Step 1: Clone the Repository
-bashgit clone https://github.com/yourusername/new_chart.git
+* **Flutter SDK** ≥ 3.19.0
+* **Dart SDK** ≥ 3.3.0
+* **Android Studio** / **VS Code** (with Flutter extensions)
+* **Xcode** (for iOS development, macOS only)
+* **Firebase Account**
+* **Zego Cloud Account**
+* **Cloudinary Account**
+
+---
+
+## 📥 Installation
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/new_chart.git
 cd new_chart
-Step 2: Install Dependencies
-bashflutter pub get
-Step 3: Firebase Setup
-3.1 Create Firebase Project
+```
 
-Go to Firebase Console
-Click "Add Project"
-Enter project name: MyChart
-Follow the setup wizard
+### 2️⃣ Install Dependencies
 
-3.2 Add Android App
+```bash
+flutter pub get
+```
 
-Click "Add App" → Android
-Register app with package name: com.example.new_chart
-Download google-services.json
-Place it in android/app/
+---
 
-3.3 Add iOS App
+## 🔥 Firebase Setup
 
-Click "Add App" → iOS
-Register app with bundle ID: com.example.newChart
-Download GoogleService-Info.plist
-Place it in ios/Runner/
+### 3.1 Create Firebase Project
 
-3.4 Enable Firebase Services
-Go to Firebase Console and enable:
+1. Go to **Firebase Console**
+2. Click **Add Project**
+3. Project name: `MyChart`
+4. Complete the setup wizard
 
-Authentication
+### 3.2 Add Android App
 
-Enable Email/Password sign-in method
+* Package name: `com.example.new_chart`
+* Download `google-services.json`
+* Place it in:
 
+```
+android/app/
+```
 
-Cloud Firestore
+### 3.3 Add iOS App
 
-Create database in production mode
-Choose closest region
-Apply security rules (see below)
+* Bundle ID: `com.example.newChart`
+* Download `GoogleService-Info.plist`
+* Place it in:
 
+```
+ios/Runner/
+```
 
-Firebase Storage
+### 3.4 Enable Firebase Services
 
-Enable storage
-Apply storage rules (see below)
+Enable the following in Firebase Console:
 
+* **Authentication** → Email/Password
+* **Cloud Firestore** → Production mode
+* **Firebase Storage**
+* **Cloud Messaging** *(optional)*
 
-Cloud Messaging (Optional)
+---
 
-Enable for push notifications
+## 🔐 Firebase Security Rules
 
+### Firestore Rules (`firestore.rules`)
 
-
-3.5 Firebase Security Rules
-Firestore Rules (firestore.rules):
-javascriptrules_version = '2';
+```javascript
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function
     function isSignedIn() {
       return request.auth != null;
     }
-    
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
-    // Users collection
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
+      allow read, create: if isSignedIn();
       allow update, delete: if isOwner(userId);
     }
-    
-    // Messages collection
     match /messages/{messageId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && 
-        (resource.data.senderId == request.auth.uid || 
-         request.resource.data.senderId == request.auth.uid);
-      allow delete: if isSignedIn() && 
-        resource.data.senderId == request.auth.uid;
+      allow read, create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.senderId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
     }
-    
-    // Chats collection
     match /chats/{chatId} {
-      allow read: if isSignedIn() && 
-        request.auth.uid in resource.data.participants;
-      allow write: if isSignedIn() && 
-        request.auth.uid in request.resource.data.participants;
+      allow read, write: if isSignedIn() && request.auth.uid in request.resource.data.participants;
     }
-    
-    // Friend requests
     match /friendRequests/{requestId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && 
-        (resource.data.senderId == request.auth.uid || 
-         resource.data.receiverId == request.auth.uid);
+      allow read, create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.receiverId == request.auth.uid
+      );
     }
-    
-    // Reactions
     match /reactions/{reactionId} {
       allow read, write: if isSignedIn();
     }
-    
-    // Typing indicators
     match /typing/{docId} {
       allow read, write: if isSignedIn();
     }
   }
 }
-Storage Rules (storage.rules):
-javascriptrules_version = '2';
+```
+
+### Storage Rules (`storage.rules`)
+
+```javascript
+rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      // Allow authenticated users to read
       allow read: if request.auth != null;
-      
-      // Allow authenticated users to write files up to 10MB
-      allow write: if request.auth != null && 
-        request.resource.size < 10 * 1024 * 1024;
+      allow write: if request.auth != null && request.resource.size < 10 * 1024 * 1024;
     }
   }
 }
+```
 
-Step 4: Cloudinary Setup
-4.1 Create Account & Get Credentials
+---
 
-Sign up at Cloudinary
-Go to Dashboard
-Note your Cloud Name
-Go to Settings → Upload
-Create an Upload Preset (unsigned)
+## ☁️ Cloudinary Setup
 
-4.2 Update Configuration
-Update lib/repositories/storage_repository.dart:
-dartStorageRepository(
-  cloudName: 'YOUR_CLOUD_NAME',      // Replace with your cloud name
-  uploadPreset: 'YOUR_UPLOAD_PRESET', // Replace with your preset
+### 4.1 Get Credentials
+
+* Create a Cloudinary account
+* Note your **Cloud Name**
+* Create an **Unsigned Upload Preset**
+
+### 4.2 Update Configuration
+
+```dart
+StorageRepository(
+  cloudName: 'YOUR_CLOUD_NAME',
+  uploadPreset: 'YOUR_UPLOAD_PRESET',
 )
+```
 
-Step 5: Zego Cloud Setup (Video/Audio Calls)
-5.1 Create Account & Get Credentials
+---
 
-Sign up at Zego Console
-Create a new project
-Get your App ID and App Sign
+## 📞 Zego Cloud (Video & Audio Calls)
 
-5.2 Update Configuration
-Update lib/services/zego_services.dart:
-dartclass ZegoService {
-  static const int appID = YOUR_APP_ID;           // Replace with your App ID
-  static const String appSign = 'YOUR_APP_SIGN';  // Replace with your App Sign
-  
-  // Rest of the code...
+### 5.1 Get Credentials
+
+* Create a project in **Zego Console**
+* Get **App ID** and **App Sign**
+
+### 5.2 Update Configuration
+
+```dart
+class ZegoService {
+  static const int appID = YOUR_APP_ID;
+  static const String appSign = 'YOUR_APP_SIGN';
 }
+```
 
-Step 6: Platform Configuration
-Android Configuration
-Minimum SDK: API 21 (Android 5.0)
-Update android/app/build.gradle:
-gradleandroid {
-    compileSdkVersion 34
-    
-    defaultConfig {
-        applicationId "com.example.new_chart"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0.0"
-    }
+---
+
+## ⚙️ Platform Configuration
+
+### 🤖 Android
+
+* **Minimum SDK**: 21
+
+`android/app/build.gradle`
+
+```gradle
+android {
+  compileSdkVersion 34
+  defaultConfig {
+    applicationId "com.example.new_chart"
+    minSdkVersion 21
+    targetSdkVersion 34
+    versionCode 1
+    versionName "1.0.0"
+  }
 }
-Add permissions in android/app/src/main/AndroidManifest.xml:
-xml<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    
-    <application
-        android:label="MyChart"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        <!-- Your app content -->
-    </application>
-</manifest>
-iOS Configuration
-Minimum iOS: 12.0
-Update ios/Podfile:
-rubyplatform :ios, '12.0'
-Add permissions in ios/Runner/Info.plist:
-xml<dict>
-  <!-- Camera Permission -->
-  <key>NSCameraUsageDescription</key>
-    <string>We need camera access to take photos for messages and video calls</string>
-    
-    <!-- Microphone Permission -->
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need microphone access to record voice messages and make calls</string>
-    
-    <!-- Photo Library Permission -->
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need photo library access to share images</string>
-    
-    <!-- Add to Photo Library Permission -->
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need permission to save images to your photo library</string>
-</dict>
+```
 
-Step 7: Run the App
-bash# Check for issues
+**Android Permissions** (`AndroidManifest.xml`)
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.CAMERA"/>
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+```
+
+---
+
+### 🍎 iOS
+
+* **Minimum iOS**: 12.0
+
+`ios/Podfile`
+
+```ruby
+platform :ios, '12.0'
+```
+
+**Permissions** (`Info.plist`)
+
+```xml
+<key>NSCameraUsageDescription</key>
+<string>Camera access for video calls</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>Microphone access for voice messages</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Photo access for sharing images</string>
+```
+
+---
+
+## ▶️ Run the App
+
+```bash
 flutter doctor
-
-# Run on connected device/emulator
 flutter run
-
-# Run in release mode (better performance)
 flutter run --release
+```
 
+---
 
+## ⭐ Support
 
+If you find this project helpful, **give it a star** on GitHub and feel free to contribute!
 
+---
 
-
-
-
-
+**Made with ❤️ using Flutter**
