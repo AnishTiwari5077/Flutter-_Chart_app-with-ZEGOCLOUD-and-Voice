@@ -64,33 +64,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     super.dispose();
   }
 
-  // 🆕 SEND EMOJI AS MESSAGE
-  Future<void> _sendEmojiMessage(String emoji) async {
-    if (_isSending) return;
-
-    setState(() => _isSending = true);
-
-    try {
-      await ref
-          .read(chatServiceProvider)
-          .sendMessage(
-            chatId: widget.chatId,
-            receiverId: widget.friend.uid,
-            content: emoji,
-            type: MessageType.text, // emoji is text
-          );
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(
-          context,
-          ErrorHandler.getErrorMessage(e),
-        );
-      }
-    } finally {
-      setState(() => _isSending = false);
-    }
-  }
-
   Future<void> _markMessagesAsRead() async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser != null) {
@@ -100,7 +73,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
-  // 🆕 NEW METHOD: Set reply message
   void _setReplyMessage(MessageModel message, String senderName) {
     setState(() {
       _replyToMessage = message;
@@ -108,7 +80,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     });
   }
 
-  // 🆕 NEW METHOD: Cancel reply
   void _cancelReply() {
     setState(() {
       _replyToMessage = null;
@@ -116,7 +87,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     });
   }
 
-  // 🆕 UPDATED: Send text message with reply support
   Future<void> _sendTextMessage() async {
     if (_messageController.text.trim().isEmpty || _isSending) return;
 
@@ -492,9 +462,11 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? color.withOpacity(0.1) : color.withOpacity(0.05),
+            color: isDark
+                ? color.withValues(alpha: .1)
+                : color.withValues(alpha: .05),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withOpacity(0.3), width: 1),
+            border: Border.all(color: color.withValues(alpha: .3), width: 1),
           ),
           child: Row(
             children: [
@@ -505,7 +477,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.3),
+                      color: color.withValues(alpha: .3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -741,7 +713,9 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: .1,
+                            ),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -808,7 +782,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.error.withOpacity(0.1),
+                          color: theme.colorScheme.error.withValues(alpha: .1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -856,7 +830,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                   blurRadius: 8,
                   offset: const Offset(0, -2),
                 ),
@@ -930,13 +904,15 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                         gradient: LinearGradient(
                           colors: [
                             theme.colorScheme.primary,
-                            theme.colorScheme.primary.withOpacity(0.8),
+                            theme.colorScheme.primary.withValues(alpha: .8),
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withOpacity(0.3),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: .3,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1000,7 +976,7 @@ class MessageBubble extends StatelessWidget {
                 ? LinearGradient(
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withOpacity(0.85),
+                      theme.colorScheme.primary.withValues(alpha: .85),
                     ],
                   )
                 : null,
@@ -1015,7 +991,7 @@ class MessageBubble extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -1024,20 +1000,19 @@ class MessageBubble extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 🆕 Reply indicator (shows which message this is replying to)
               if (message.replyToContent != null) ...[
                 Container(
                   padding: const EdgeInsets.all(8),
                   margin: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
-                    color: (isMe ? Colors.white : Colors.black).withOpacity(
-                      0.1,
+                    color: (isMe ? Colors.white : Colors.black).withValues(
+                      alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(8),
                     border: Border(
                       left: BorderSide(
                         color: isMe
-                            ? Colors.white.withOpacity(0.5)
+                            ? Colors.white.withValues(alpha: 0.5)
                             : theme.colorScheme.primary,
                         width: 3,
                       ),
@@ -1047,7 +1022,7 @@ class MessageBubble extends StatelessWidget {
                     message.replyToContent!,
                     style: TextStyle(
                       color: isMe
-                          ? Colors.white.withOpacity(0.8)
+                          ? Colors.white.withValues(alpha: .8)
                           : (isDark
                                 ? AppTheme.textSecondaryDark
                                 : AppTheme.textSecondaryLight),
@@ -1133,7 +1108,7 @@ class MessageBubble extends StatelessWidget {
                         'edited',
                         style: TextStyle(
                           color: isMe
-                              ? Colors.white.withOpacity(0.7)
+                              ? Colors.white.withValues(alpha: .7)
                               : (isDark
                                     ? AppTheme.textTertiaryDark
                                     : AppTheme.textTertiaryLight),
@@ -1146,7 +1121,7 @@ class MessageBubble extends StatelessWidget {
                     DateFormatter.formatChatTime(message.timestamp),
                     style: TextStyle(
                       color: isMe
-                          ? Colors.white.withOpacity(0.85)
+                          ? Colors.white.withValues(alpha: .85)
                           : (isDark
                                 ? AppTheme.textTertiaryDark
                                 : AppTheme.textTertiaryLight),
@@ -1163,7 +1138,7 @@ class MessageBubble extends StatelessWidget {
                       size: 16,
                       color: message.isRead
                           ? Colors.lightBlueAccent
-                          : Colors.white.withOpacity(0.85),
+                          : Colors.white.withValues(alpha: .85),
                     ),
                   ],
                 ],

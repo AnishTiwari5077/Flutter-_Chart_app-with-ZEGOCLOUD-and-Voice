@@ -2,7 +2,7 @@ class FriendRequest {
   final String id;
   final String senderId;
   final String receiverId;
-  final String status; // pending, accepted, rejected
+  final String status;
   final DateTime timestamp;
 
   FriendRequest({

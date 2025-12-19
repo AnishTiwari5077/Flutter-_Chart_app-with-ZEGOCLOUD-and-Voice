@@ -1,9 +1,7 @@
 class AppStrings {
-  // App Info
   static const String appName = 'Professional Chat';
   static const String appVersion = '1.0.0';
 
-  // Authentication
   static const String signIn = 'Sign In';
   static const String signUp = 'Sign Up';
   static const String email = 'Email';
@@ -20,7 +18,6 @@ class AppStrings {
   static const String welcomeBack = 'Welcome Back';
   static const String getStarted = 'Get Started';
 
-  // Profile
   static const String profile = 'Profile';
   static const String editProfile = 'Edit Profile';
   static const String updateProfile = 'Update Profile';
@@ -31,7 +28,6 @@ class AppStrings {
   static const String notificationSettings = 'Notification Settings';
   static const String memberSince = 'Member since';
 
-  // Chat
   static const String chats = 'Chats';
   static const String newChat = 'New Chat';
   static const String conversation = 'Conversation';
@@ -53,7 +49,6 @@ class AppStrings {
   static const String noUsersDescription =
       'Try searching with a different keyword';
 
-  // Friend Requests
   static const String requests = 'Requests';
   static const String friendRequests = 'Friend Requests';
   static const String sendRequest = 'Send Request';
@@ -69,14 +64,12 @@ class AppStrings {
   static const String alreadyFriends = 'Already Friends';
   static const String pending = 'Pending';
 
-  // Status
   static const String online = 'Online';
   static const String offline = 'Offline';
   static const String lastSeen = 'Last seen';
   static const String typing = 'Typing...';
   static const String recording = 'Recording...';
 
-  // Calls
   static const String audioCall = 'Audio Call';
   static const String videoCall = 'Video Call';
   static const String incomingCall = 'Incoming Call';
@@ -84,7 +77,6 @@ class AppStrings {
   static const String callEnded = 'Call Ended';
   static const String missedCall = 'Missed Call';
 
-  // Media
   static const String camera = 'Camera';
   static const String gallery = 'Gallery';
   static const String photo = 'Photo';
@@ -98,7 +90,6 @@ class AppStrings {
   static const String sendVideo = 'Send Video';
   static const String sendFile = 'Send File';
 
-  // Actions
   static const String save = 'Save';
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
@@ -117,7 +108,6 @@ class AppStrings {
   static const String next = 'Next';
   static const String skip = 'Skip';
 
-  // Messages
   static const String loading = 'Loading...';
   static const String pleaseWait = 'Please wait...';
   static const String processing = 'Processing...';
@@ -130,7 +120,6 @@ class AppStrings {
   static const String warning = 'Warning';
   static const String info = 'Info';
 
-  // Errors
   static const String errorOccurred = 'An error occurred';
   static const String tryAgain = 'Please try again';
   static const String somethingWentWrong = 'Something went wrong';

@@ -35,7 +35,6 @@ class FriendRequestService {
           .doc(requestId)
           .set(friendRequest.toMap());
 
-      // Send notification to receiver
       final receiverDoc = await _firestore
           .collection('users')
           .doc(receiverId)
@@ -68,7 +67,6 @@ class FriendRequestService {
         'status': 'accepted',
       });
 
-      // Create chat between users
       final chatId = _generateChatId(currentUser.uid, senderId);
       await _firestore.collection('chats').doc(chatId).set({
         'chatId': chatId,
@@ -79,7 +77,6 @@ class FriendRequestService {
         'lastMessageType': null,
       });
 
-      // Send notification to sender
       final senderDoc = await _firestore
           .collection('users')
           .doc(senderId)
@@ -110,7 +107,6 @@ class FriendRequestService {
     }
   }
 
-  /// Unfriend a user - removes friendship and deletes chat
   Future<void> unfriend(String friendId, String friendUsername) async {
     try {
       final currentUser = ref.read(currentUserProvider).value;
@@ -118,24 +114,20 @@ class FriendRequestService {
 
       final chatId = _generateChatId(currentUser.uid, friendId);
 
-      // Delete the chat document
       await _firestore.collection('chats').doc(chatId).delete();
 
-      // Delete all messages in the chat
       final messagesSnapshot = await _firestore
           .collection('chats')
           .doc(chatId)
           .collection('messages')
           .get();
 
-      // Batch delete messages
       final batch = _firestore.batch();
       for (var doc in messagesSnapshot.docs) {
         batch.delete(doc.reference);
       }
       await batch.commit();
 
-      // Delete any accepted friend requests between these users
       final friendRequestsSnapshot = await _firestore
           .collection('friendRequests')
           .where('status', isEqualTo: 'accepted')
@@ -155,7 +147,6 @@ class FriendRequestService {
       }
       await requestBatch.commit();
 
-      // Send notification to the unfriended user
       final friendDoc = await _firestore
           .collection('users')
           .doc(friendId)

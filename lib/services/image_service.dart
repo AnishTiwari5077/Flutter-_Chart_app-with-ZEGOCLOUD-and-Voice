@@ -89,7 +89,7 @@ class ImagePickerService {
       if (croppedFile != null) {
         debugPrint('Cropped image path: ${croppedFile.path}');
         final file = File(croppedFile.path);
-        // Verify file exists
+
         if (await file.exists()) {
           debugPrint(
             'Cropped file exists and size: ${await file.length()} bytes',
@@ -101,10 +101,10 @@ class ImagePickerService {
         }
       }
       debugPrint('Cropping was cancelled, returning original');
-      return imageFile; // Return original if cropping was cancelled
+      return imageFile;
     } catch (e) {
       debugPrint('Error cropping image: $e');
-      return imageFile; // Return original on error
+      return imageFile;
     }
   }
 
@@ -148,7 +148,7 @@ class ImagePickerService {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: .1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -191,7 +191,7 @@ class ImagePickerService {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: .1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -234,7 +234,7 @@ class ImagePickerService {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.close, color: Colors.red),

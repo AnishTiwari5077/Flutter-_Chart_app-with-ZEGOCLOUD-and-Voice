@@ -69,14 +69,13 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    /// 🎤 Idle mic button
     if (!_isRecording) {
       return GestureDetector(
         onLongPressStart: (_) => _startRecording(),
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: .1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -88,16 +87,15 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
       );
     }
 
-    /// 🔴 Recording UI (NO Expanded!)
     return Container(
       constraints: const BoxConstraints(maxWidth: 260), // ✅ bounded width
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.error.withOpacity(0.1),
+        color: theme.colorScheme.error.withValues(alpha: .1),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min, // ✅ VERY IMPORTANT
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Cancel
           GestureDetector(
@@ -130,7 +128,6 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
 
           const SizedBox(width: 6),
 
-          // Timer
           Text(
             _format(_recordingDuration),
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -141,21 +138,19 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
 
           const SizedBox(width: 10),
 
-          // Slide hint (FIXED)
           Flexible(
-            fit: FlexFit.loose, // ✅ SAFE inside Row
+            fit: FlexFit.loose,
             child: Text(
               '◀ Slide to cancel',
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.error.withOpacity(0.7),
+                color: theme.colorScheme.error.withValues(alpha: .7),
               ),
             ),
           ),
 
           const SizedBox(width: 8),
 
-          // Send
           GestureDetector(
             onTap: _stopRecording,
             child: Container(
@@ -164,7 +159,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
                 gradient: LinearGradient(
                   colors: [
                     theme.colorScheme.primary,
-                    theme.colorScheme.primary.withOpacity(0.85),
+                    theme.colorScheme.primary.withValues(alpha: .85),
                   ],
                 ),
                 shape: BoxShape.circle,

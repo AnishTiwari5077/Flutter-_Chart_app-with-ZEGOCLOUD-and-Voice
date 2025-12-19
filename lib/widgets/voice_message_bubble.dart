@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+
 import '../theme/app_theme.dart';
 
 class VoiceMessageBubble extends StatefulWidget {
@@ -89,7 +90,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
             ? LinearGradient(
                 colors: [
                   widget.theme.colorScheme.primary,
-                  widget.theme.colorScheme.primary.withOpacity(0.85),
+                  widget.theme.colorScheme.primary.withValues(alpha: .85),
                 ],
               )
             : null,
@@ -101,15 +102,14 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Play/Pause button
           GestureDetector(
             onTap: _togglePlayback,
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: widget.isMe
-                    ? Colors.white.withOpacity(0.2)
-                    : widget.theme.colorScheme.primary.withOpacity(0.1),
+                    ? Colors.white.withValues(alpha: .2)
+                    : widget.theme.colorScheme.primary.withValues(alpha: .1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -124,12 +124,10 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
           const SizedBox(width: 12),
 
-          // Waveform and progress
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Waveform visualization (simplified)
                 SizedBox(
                   height: 30,
                   child: Row(
@@ -144,7 +142,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
                             color: widget.isMe
                                 ? (isActive
                                       ? Colors.white
-                                      : Colors.white.withOpacity(0.3))
+                                      : Colors.white.withValues(alpha: .3))
                                 : (isActive
                                       ? widget.theme.colorScheme.primary
                                       : (widget.isDark
@@ -162,14 +160,13 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
                 const SizedBox(height: 4),
 
-                // Duration
                 Text(
                   _isPlaying
                       ? _formatDuration(_position)
                       : _formatDuration(widget.duration ?? _duration),
                   style: TextStyle(
                     color: widget.isMe
-                        ? Colors.white.withOpacity(0.9)
+                        ? Colors.white.withValues(alpha: .9)
                         : (widget.isDark
                               ? AppTheme.textSecondaryDark
                               : AppTheme.textSecondaryLight),

@@ -24,7 +24,7 @@ class UserAvatar extends StatelessWidget {
 
     Widget avatar = CircleAvatar(
       radius: radius,
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: .1),
       backgroundImage: imageUrl != null
           ? CachedNetworkImageProvider(imageUrl!)
           : null,
@@ -58,7 +58,7 @@ class UserAvatar extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.onlineGreen.withOpacity(0.5),
+                      color: AppTheme.onlineGreen.withValues(alpha: .5),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),

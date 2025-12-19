@@ -4,14 +4,13 @@ import '../models/user_model.dart';
 class UserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// ✅ Get user stream with null-safety handling
   Stream<UserModel?> getUserStream(String uid) {
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       if (doc.exists && doc.data() != null) {
         try {
           return UserModel.fromMap(doc.data()!);
         } catch (e) {
-          print('Error parsing UserModel: $e');
+          // print('Error parsing UserModel: $e');
           return null;
         }
       }
@@ -19,7 +18,6 @@ class UserRepository {
     });
   }
 
-  /// ✅ Get user once (for one-time fetch)
   Future<UserModel?> getUser(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -32,7 +30,6 @@ class UserRepository {
     }
   }
 
-  /// ✅ Get all users except current user
   Stream<List<UserModel>> getAllUsers(String currentUserId) {
     return _firestore
         .collection('users')
@@ -44,16 +41,15 @@ class UserRepository {
                 try {
                   return UserModel.fromMap(doc.data());
                 } catch (e) {
-                  print('Error parsing user ${doc.id}: $e');
+                  //  print('Error parsing user ${doc.id}: $e');
                   return null;
                 }
               })
-              .whereType<UserModel>() // Filter out nulls
+              .whereType<UserModel>()
               .toList();
         });
   }
 
-  /// ✅ Search users with query
   Stream<List<UserModel>> searchUsers(String query, String currentUserId) {
     if (query.isEmpty) {
       return getAllUsers(currentUserId);
@@ -69,17 +65,16 @@ class UserRepository {
                 try {
                   return UserModel.fromMap(doc.data());
                 } catch (e) {
-                  print('Error parsing user ${doc.id}: $e');
+                  //    print('Error parsing user ${doc.id}: $e');
                   return null;
                 }
               })
-              .whereType<UserModel>() // Filter out nulls
+              .whereType<UserModel>()
               .where((user) => user.uid != currentUserId)
               .toList();
         });
   }
 
-  /// ✅ Update user data
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
     try {
       await _firestore.collection('users').doc(uid).update(data);
@@ -88,7 +83,6 @@ class UserRepository {
     }
   }
 
-  /// ✅ Update username
   Future<void> updateUsername(String uid, String username) async {
     try {
       await _firestore.collection('users').doc(uid).update({
@@ -100,7 +94,6 @@ class UserRepository {
     }
   }
 
-  /// ✅ Update avatar
   Future<void> updateAvatar(String uid, String avatarUrl) async {
     try {
       await _firestore.collection('users').doc(uid).update({

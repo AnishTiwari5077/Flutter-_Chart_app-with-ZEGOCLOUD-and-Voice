@@ -42,8 +42,8 @@ class AppTheme {
   static const Color borderDark = Color(0xFF3C4043);
 
   // Shadow colors
-  static Color shadowLight = Colors.black.withOpacity(0.08);
-  static Color shadowDark = Colors.black.withOpacity(0.3);
+  static Color shadowLight = Colors.black.withValues(alpha: .08);
+  static Color shadowDark = Colors.black.withValues(alpha: .3);
 
   // Online status colors
   static const Color onlineGreen = Color(0xFF4CAF50);
@@ -61,29 +61,26 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: primaryColor,
       onPrimary: Colors.white,
-      primaryContainer: primaryLight.withOpacity(0.2),
+      primaryContainer: primaryLight.withValues(alpha: .2),
       onPrimaryContainer: primaryDark,
 
       secondary: accentColor,
       onSecondary: Colors.white,
-      secondaryContainer: accentLight.withOpacity(0.2),
+      secondaryContainer: accentLight.withValues(alpha: 0.2),
       onSecondaryContainer: accentColor,
 
       surface: surfaceLight,
       onSurface: textPrimaryLight,
 
-      background: backgroundLight,
-      onBackground: textPrimaryLight,
-
       error: errorColor,
       onError: Colors.white,
 
       outline: borderLight,
-      outlineVariant: borderLight.withOpacity(0.5),
+      outlineVariant: borderLight.withValues(alpha: .5),
 
       shadow: shadowLight,
 
-      surfaceVariant: cardLight,
+      surfaceContainerHighest: cardLight,
       onSurfaceVariant: textSecondaryLight,
     ),
 
@@ -126,8 +123,8 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.white,
         backgroundColor: primaryColor,
-        disabledForegroundColor: Colors.white.withOpacity(0.38),
-        disabledBackgroundColor: primaryColor.withOpacity(0.12),
+        disabledForegroundColor: Colors.white.withValues(alpha: .38),
+        disabledBackgroundColor: primaryColor.withValues(alpha: .12),
         elevation: 0,
         shadowColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -176,7 +173,7 @@ class AppTheme {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         foregroundColor: textSecondaryLight,
-        highlightColor: primaryColor.withOpacity(0.1),
+        highlightColor: primaryColor.withValues(alpha: 0.1),
         padding: const EdgeInsets.all(8),
       ),
     ),
@@ -215,7 +212,7 @@ class AppTheme {
         fontFamily: 'SF Pro Text',
       ),
       hintStyle: TextStyle(
-        color: textSecondaryLight.withOpacity(0.6),
+        color: textSecondaryLight.withValues(alpha: .6),
         fontSize: 16,
         fontWeight: FontWeight.w400,
         fontFamily: 'SF Pro Text',
@@ -358,8 +355,8 @@ class AppTheme {
       backgroundColor: Colors.grey.shade100,
       deleteIconColor: textSecondaryLight,
       disabledColor: Colors.grey.shade200,
-      selectedColor: primaryColor.withOpacity(0.2),
-      secondarySelectedColor: accentColor.withOpacity(0.2),
+      selectedColor: primaryColor.withValues(alpha: .2),
+      secondarySelectedColor: accentColor.withValues(alpha: .2),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       labelStyle: const TextStyle(
         color: textPrimaryLight,
@@ -439,29 +436,26 @@ class AppTheme {
     colorScheme: ColorScheme.dark(
       primary: primaryLight,
       onPrimary: Colors.white,
-      primaryContainer: primaryDark.withOpacity(0.3),
+      primaryContainer: primaryDark.withValues(alpha: .3),
       onPrimaryContainer: primaryLight,
 
       secondary: accentLight,
       onSecondary: Colors.black,
-      secondaryContainer: accentColor.withOpacity(0.3),
+      secondaryContainer: accentColor.withValues(alpha: .3),
       onSecondaryContainer: accentLight,
 
       surface: surfaceDark,
       onSurface: textPrimaryDark,
 
-      background: backgroundDark,
-      onBackground: textPrimaryDark,
-
       error: const Color(0xFFEF5350),
       onError: Colors.white,
 
       outline: borderDark,
-      outlineVariant: borderDark.withOpacity(0.5),
+      outlineVariant: borderDark.withValues(alpha: .5),
 
       shadow: shadowDark,
 
-      surfaceVariant: cardDark,
+      surfaceContainerHighest: cardDark,
       onSurfaceVariant: textSecondaryDark,
     ),
 
@@ -504,8 +498,8 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.white,
         backgroundColor: primaryLight,
-        disabledForegroundColor: Colors.white.withOpacity(0.38),
-        disabledBackgroundColor: primaryLight.withOpacity(0.12),
+        disabledForegroundColor: Colors.white.withValues(alpha: .38),
+        disabledBackgroundColor: primaryLight.withValues(alpha: .12),
         elevation: 0,
         shadowColor: Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -554,7 +548,7 @@ class AppTheme {
     iconButtonTheme: IconButtonThemeData(
       style: IconButton.styleFrom(
         foregroundColor: textSecondaryDark,
-        highlightColor: primaryLight.withOpacity(0.1),
+        highlightColor: primaryLight.withValues(alpha: .1),
         padding: const EdgeInsets.all(8),
       ),
     ),
@@ -593,7 +587,7 @@ class AppTheme {
         fontFamily: 'SF Pro Text',
       ),
       hintStyle: TextStyle(
-        color: textSecondaryDark.withOpacity(0.6),
+        color: textSecondaryDark.withValues(alpha: .6),
         fontSize: 16,
         fontWeight: FontWeight.w400,
         fontFamily: 'SF Pro Text',
@@ -740,8 +734,8 @@ class AppTheme {
       backgroundColor: Colors.grey.shade900,
       deleteIconColor: textSecondaryDark,
       disabledColor: Colors.grey.shade800,
-      selectedColor: primaryLight.withOpacity(0.2),
-      secondarySelectedColor: accentLight.withOpacity(0.2),
+      selectedColor: primaryLight.withValues(alpha: .2),
+      secondarySelectedColor: accentLight.withValues(alpha: .2),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       labelStyle: const TextStyle(
         color: textPrimaryDark,

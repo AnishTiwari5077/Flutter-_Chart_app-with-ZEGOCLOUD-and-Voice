@@ -6,7 +6,6 @@ import '../models/message_model.dart';
 class MessageService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Add or remove reaction to message (toggle)
   Future<void> addReaction(
     String chatId,
     String messageId,
@@ -34,7 +33,6 @@ class MessageService {
         reactions[key] = List<String>.from(value);
       });
 
-      // 🆕 STEP 1: Remove user's previous reaction from all emojis
       String? userPreviousEmoji;
       reactions.forEach((existingEmoji, users) {
         if (users.contains(userId)) {
@@ -42,7 +40,6 @@ class MessageService {
         }
       });
 
-      // If user had a previous reaction, remove it
       if (userPreviousEmoji != null) {
         reactions[userPreviousEmoji]!.remove(userId);
         if (reactions[userPreviousEmoji]!.isEmpty) {
@@ -50,8 +47,6 @@ class MessageService {
         }
       }
 
-      // 🆕 STEP 2: If clicking same emoji as before, just remove (toggle off)
-      // If clicking different emoji, add the new one
       if (userPreviousEmoji != emoji) {
         if (reactions.containsKey(emoji)) {
           reactions[emoji]!.add(userId);
@@ -64,7 +59,6 @@ class MessageService {
     });
   }
 
-  // Edit message
   Future<void> editMessage(
     String chatId,
     String messageId,
@@ -92,7 +86,6 @@ class MessageService {
         .delete();
   }
 
-  // Get message by ID
   Future<MessageModel?> getMessageById(String chatId, String messageId) async {
     final doc = await _firestore
         .collection('chats')

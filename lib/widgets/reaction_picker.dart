@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
+// ignore: must_be_immutable
 class ReactionPicker extends StatelessWidget {
   final Function(String emoji) onReactionSelected;
 
@@ -29,7 +30,7 @@ class ReactionPicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

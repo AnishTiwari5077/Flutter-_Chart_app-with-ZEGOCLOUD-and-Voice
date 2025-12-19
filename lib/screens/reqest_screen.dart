@@ -173,7 +173,7 @@ class RequestsScreen extends ConsumerWidget {
                               title: Text('Loading...'),
                             ),
                           ),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         );
                       },
                     );
@@ -208,8 +208,9 @@ class RequestsScreen extends ConsumerWidget {
 
                         return receiverAsync.when(
                           data: (receiver) {
-                            if (receiver == null)
+                            if (receiver == null) {
                               return const SizedBox.shrink();
+                            }
 
                             return Card(
                               margin: const EdgeInsets.symmetric(
@@ -241,7 +242,7 @@ class RequestsScreen extends ConsumerWidget {
                               title: Text('Loading...'),
                             ),
                           ),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         );
                       },
                     );

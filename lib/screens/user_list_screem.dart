@@ -105,11 +105,11 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.orange.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.05),
+                        ? Colors.orange.withValues(alpha: 0.1)
+                        : Colors.orange.withValues(alpha: .05),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.orange.withOpacity(0.3),
+                      color: Colors.orange.withValues(alpha: .3),
                       width: 1,
                     ),
                   ),
@@ -225,7 +225,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
               color: theme.appBarTheme.backgroundColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: .05),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -296,7 +296,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                       height: 1,
                       indent: 72,
                       color: isDark
-                          ? Colors.grey.shade800.withOpacity(0.5)
+                          ? Colors.grey.shade800.withValues(alpha: .5)
                           : Colors.grey.shade200,
                     ),
                     itemBuilder: (context, index) {
@@ -500,10 +500,10 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: .1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: theme.colorScheme.primary.withOpacity(0.3),
+              color: theme.colorScheme.primary.withValues(alpha: .3),
               width: 1,
             ),
           ),

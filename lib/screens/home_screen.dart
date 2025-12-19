@@ -37,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
               blurRadius: 12,
               offset: const Offset(0, -2),
             ),
@@ -49,7 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             setState(() => _currentIndex = index);
           },
           backgroundColor: isDark ? AppTheme.cardDark : AppTheme.cardLight,
-          indicatorColor: theme.colorScheme.primary.withOpacity(0.15),
+          indicatorColor: theme.colorScheme.primary.withValues(alpha: .15),
           elevation: 0,
           height: 68,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

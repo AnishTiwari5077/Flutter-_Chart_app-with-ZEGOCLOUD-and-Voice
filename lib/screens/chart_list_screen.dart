@@ -38,7 +38,7 @@ class ChatListScreen extends ConsumerWidget {
               height: 1,
               indent: 72,
               color: isDark
-                  ? Colors.grey.shade800.withOpacity(0.5)
+                  ? Colors.grey.shade800.withValues(alpha: .5)
                   : Colors.grey.shade200,
             ),
             itemBuilder: (context, index) {
@@ -267,7 +267,7 @@ class ChatListScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    error: (_, __) => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
                   );
                 },
               );

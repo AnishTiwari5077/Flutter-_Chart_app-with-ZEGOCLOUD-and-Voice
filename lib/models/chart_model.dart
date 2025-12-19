@@ -32,18 +32,13 @@ class ChatModel {
         (map['participants'] ?? []).map((e) => e.toString()),
       ),
 
-      // SAFELY convert any type to string
       lastMessage: map['lastMessage']?.toString(),
 
-      // SAFELY parse multiple Firestore formats
       lastMessageTime: _parseDate(map['lastMessageTime']),
 
-      // SAFELY convert unreadCount map
       unreadCount: _parseUnread(map['unreadCount']),
     );
   }
-
-  // ——— SAFE PARSERS ——— //
 
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;

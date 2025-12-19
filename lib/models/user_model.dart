@@ -38,7 +38,6 @@ class UserModel {
     };
   }
 
-  /// Create from Firestore Map - Handles multiple date formats
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       uid: map['uid'] as String? ?? '',
@@ -53,39 +52,32 @@ class UserModel {
     );
   }
 
-  /// Parse DateTime from various formats
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
 
     try {
-      // If it's a Firestore Timestamp
       if (value is Timestamp) {
         return value.toDate();
       }
 
-      // If it's milliseconds since epoch (int)
       if (value is int) {
         return DateTime.fromMillisecondsSinceEpoch(value);
       }
 
-      // If it's a double (sometimes Firebase returns this)
       if (value is double) {
         return DateTime.fromMillisecondsSinceEpoch(value.toInt());
       }
 
-      // If it's a String (ISO format)
       if (value is String) {
         return DateTime.parse(value);
       }
 
       return null;
     } catch (e) {
-      print('Error parsing DateTime from $value: $e');
       return null;
     }
   }
 
-  /// Parse search keywords safely
   static List<String> _parseSearchKeywords(dynamic value) {
     if (value == null) return [];
 
@@ -95,7 +87,6 @@ class UserModel {
       }
       return [];
     } catch (e) {
-      print('Error parsing searchKeywords: $e');
       return [];
     }
   }
@@ -125,7 +116,6 @@ class UserModel {
     );
   }
 
-  /// Generate search keywords for username
   static List<String> generateSearchKeywords(String username) {
     List<String> keywords = [];
     String temp = "";

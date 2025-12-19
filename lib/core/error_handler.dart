@@ -1,9 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class ErrorHandler {
-  // Get user-friendly error message from exception
   static String getErrorMessage(dynamic error) {
     if (error is FirebaseAuthException) {
       return _getAuthErrorMessage(error);
@@ -13,14 +11,12 @@ class ErrorHandler {
       return _getFirebaseErrorMessage(error);
     }
 
-    // Generic error
     return error
         .toString()
         .replaceAll('Exception: ', '')
         .replaceAll('Error: ', '');
   }
 
-  // Firebase Auth specific errors
   static String _getAuthErrorMessage(FirebaseAuthException error) {
     switch (error.code) {
       case 'user-not-found':

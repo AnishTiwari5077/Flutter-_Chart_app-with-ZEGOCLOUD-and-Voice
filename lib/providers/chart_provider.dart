@@ -26,7 +26,7 @@ final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
                 try {
                   return ChatModel.fromMap(doc.data());
                 } catch (e) {
-                  print('Error parsing chat ${doc.id}: $e');
+                  //     print('Error parsing chat ${doc.id}: $e');
                   return null;
                 }
               })
@@ -41,7 +41,7 @@ final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
 
           return chats;
         } catch (e) {
-          print('Error in chatListProvider: $e');
+          //   print('Error in chatListProvider: $e');
           return <ChatModel>[];
         }
       });
@@ -64,8 +64,8 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
               try {
                 return MessageModel.fromMap(doc.data());
               } catch (e) {
-                print('Error parsing message ${doc.id}: $e');
-                print('Data: ${doc.data()}');
+                //  print('Error parsing message ${doc.id}: $e');
+                //  print('Data: ${doc.data()}');
                 return null;
               }
             })
@@ -156,7 +156,7 @@ class ChatService {
         }
       }
     } catch (e) {
-      print('Error sending message: $e');
+      //   print('Error sending message: $e');
       rethrow;
     }
   }
@@ -181,7 +181,7 @@ class ChatService {
       }
       await batch.commit();
     } catch (e) {
-      print('Error marking messages as read: $e');
+      //   print('Error marking messages as read: $e');
       rethrow;
     }
   }
@@ -207,7 +207,7 @@ class ChatService {
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
     } catch (e) {
-      print('Error clearing conversation: $e');
+      //  print('Error clearing conversation: $e');
       rethrow;
     }
   }
@@ -258,7 +258,7 @@ class ChatService {
 
       return chatId;
     } catch (e) {
-      print('Error getting or creating chat: $e');
+      //  print('Error getting or creating chat: $e');
       rethrow;
     }
   }

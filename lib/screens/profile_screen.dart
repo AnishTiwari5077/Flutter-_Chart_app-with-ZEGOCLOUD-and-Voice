@@ -15,7 +15,6 @@ import '../../repositories/storage_repository.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_theme.dart';
 
-// Constants
 class ProfileConstants {
   static const double avatarRadius = 60.0;
   static const double editAvatarRadius = 50.0;
@@ -25,7 +24,6 @@ class ProfileConstants {
   static const double buttonPaddingVertical = 12.0;
 }
 
-// Providers
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository();
 });
@@ -73,16 +71,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Perform logout
       await ref.read(authRepositoryProvider).signOut();
-
-      // The AuthenticationWrapper in main.dart will handle:
-      // 1. Invalidating all providers
-      // 2. Uninitializing Zego
-      // 3. Navigating to SignInScreen
-
-      // No need to manually navigate or clean up here
-      print('✅ Logout successful');
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -329,7 +318,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: .1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: theme.colorScheme.primary, size: 24),
@@ -375,7 +364,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.1),
+            color: statusColor.withValues(alpha: .1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(Icons.circle, color: statusColor, size: 24),
@@ -584,7 +573,7 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: .1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -592,7 +581,7 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
             ),
             child: CircleAvatar(
               radius: ProfileConstants.editAvatarRadius,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: .1),
               backgroundImage: _getAvatarImage(),
               child: _getAvatarPlaceholder(theme),
             ),
@@ -611,7 +600,7 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: .2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -633,7 +622,7 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: .2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),

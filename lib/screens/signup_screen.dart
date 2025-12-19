@@ -423,7 +423,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: .1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -432,7 +432,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               child: CircleAvatar(
                 key: ValueKey(_avatarImage?.path ?? 'no_image'),
                 radius: SignUpConstants.avatarRadius,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: .1,
+                ),
                 backgroundImage: _avatarImage != null
                     ? FileImage(_avatarImage!)
                     : null,
@@ -461,7 +463,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -485,7 +487,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: .2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

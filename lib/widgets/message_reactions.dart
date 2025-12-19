@@ -40,7 +40,7 @@ class MessageReactions extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: hasReacted
-                  ? theme.colorScheme.primary.withOpacity(0.2)
+                  ? theme.colorScheme.primary.withValues(alpha: .2)
                   : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(

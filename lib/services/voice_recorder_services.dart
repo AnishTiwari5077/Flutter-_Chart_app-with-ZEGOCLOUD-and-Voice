@@ -13,19 +13,16 @@ class VoiceRecorderService {
   bool get isRecording => _isRecording;
   String? get recordingPath => _recordingPath;
 
-  /// Request microphone permission
   Future<bool> requestPermission() async {
     final status = await Permission.microphone.request();
     return status.isGranted;
   }
 
-  /// Check if has permission
   Future<bool> hasPermission() async {
     final status = await Permission.microphone.status;
     return status.isGranted;
   }
 
-  /// Start recording
   Future<bool> startRecording() async {
     try {
       if (!await hasPermission()) {
@@ -49,24 +46,22 @@ class VoiceRecorderService {
       _isRecording = true;
       return true;
     } catch (e) {
-      print('Error starting recording: $e');
+      //   print('Error starting recording: $e');
       return false;
     }
   }
 
-  /// Stop recording
   Future<String?> stopRecording() async {
     try {
       final path = await _audioRecorder.stop();
       _isRecording = false;
       return path;
     } catch (e) {
-      print('Error stopping recording: $e');
+      //  print('Error stopping recording: $e');
       return null;
     }
   }
 
-  /// Cancel recording
   Future<void> cancelRecording() async {
     try {
       await _audioRecorder.stop();
@@ -80,13 +75,11 @@ class VoiceRecorderService {
       }
       _recordingPath = null;
     } catch (e) {
-      print('Error canceling recording: $e');
+      //  print('Error canceling recording: $e');
     }
   }
 
-  /// Get recording duration (you'll need to calculate this)
   Future<Duration?> getRecordingDuration(String path) async {
-    // Implementation depends on your audio player library
     return null;
   }
 

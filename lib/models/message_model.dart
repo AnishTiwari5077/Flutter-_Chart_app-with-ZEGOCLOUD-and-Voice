@@ -1,12 +1,4 @@
-// lib/models/message_model.dart
-
-enum MessageType {
-  text,
-  image,
-  video,
-  file,
-  voice, // 🆕 NEW: Voice message type
-}
+enum MessageType { text, image, video, file, voice }
 
 class MessageModel {
   final String messageId;
@@ -17,9 +9,8 @@ class MessageModel {
   final DateTime timestamp;
   final bool isRead;
   final String? mediaUrl;
-  final String? fileName; // 🆕 NEW: For voice duration (e.g., "45s")
+  final String? fileName;
 
-  // Reactions & Replies
   final Map<String, List<String>>? reactions;
   final String? replyToMessageId;
   final String? replyToContent;

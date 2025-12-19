@@ -13,7 +13,6 @@ class StorageRepository {
   StorageRepository({required String cloudName, required String uploadPreset})
     : _cloudinary = CloudinaryPublic(cloudName, uploadPreset, cache: false);
 
-  /// Upload avatar image
   Future<String> uploadAvatar(String uid, File file) async {
     try {
       debugPrint('📤 Starting avatar upload for user: $uid');

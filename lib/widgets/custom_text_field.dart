@@ -74,8 +74,8 @@ class CustomTextField extends StatelessWidget {
                           ? AppTheme.textSecondaryDark
                           : AppTheme.textSecondaryLight)
                     : (isDark
-                          ? AppTheme.textSecondaryDark.withOpacity(0.5)
-                          : AppTheme.textSecondaryLight.withOpacity(0.5)),
+                          ? AppTheme.textSecondaryDark.withValues(alpha: .5)
+                          : AppTheme.textSecondaryLight.withValues(alpha: .5)),
               )
             : null,
         suffixIcon: suffixIcon,
@@ -113,7 +113,7 @@ class CustomTextField extends StatelessWidget {
         fillColor: enabled
             ? (isDark ? Colors.grey.shade900 : Colors.grey.shade50)
             : (isDark
-                  ? Colors.grey.shade900.withOpacity(0.5)
+                  ? Colors.grey.shade900.withValues(alpha: .5)
                   : Colors.grey.shade100),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

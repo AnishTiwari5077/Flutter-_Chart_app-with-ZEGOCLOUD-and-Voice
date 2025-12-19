@@ -12,7 +12,6 @@ class AuthRepository {
 
   User? get currentUser => _auth.currentUser;
 
-  /// ---------------- SIGN IN ----------------
   Future<UserCredential> signInWithEmailAndPassword(
     String email,
     String password,
@@ -26,7 +25,6 @@ class AuthRepository {
       if (credential.user != null) {
         final fcmToken = await _messaging.getToken() ?? '';
 
-        // ✅ Update online status
         await _firestore.collection('users').doc(credential.user!.uid).set({
           'isOnline': true,
           'fcmToken': fcmToken,
@@ -48,18 +46,12 @@ class AuthRepository {
     String? avatarUrl,
   }) async {
     try {
-      print('🔐 Step 1: Creating Firebase Auth user...');
-
-      // ✅ Step 1: Create Firebase Auth user
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       if (credential.user != null) {
-        print('✅ Firebase Auth user created: ${credential.user!.uid}');
-        print('📝 Step 2: Creating Firestore document...');
-
         final fcmToken = await _messaging.getToken() ?? '';
 
         final userModel = UserModel(
@@ -74,18 +66,11 @@ class AuthRepository {
           searchKeywords: UserModel.generateSearchKeywords(username),
         );
 
-        // ✅ Step 2: Create Firestore document
-        // Using set() ensures the document is created
         await _firestore
             .collection('users')
             .doc(credential.user!.uid)
             .set(userModel.toMap());
 
-        print('✅ Firestore document created');
-        print('🔍 Step 3: Verifying document...');
-
-        // ✅ Step 3: Verify the document was written successfully
-        // This ensures the document exists before returning
         final doc = await _firestore
             .collection('users')
             .doc(credential.user!.uid)
@@ -94,22 +79,17 @@ class AuthRepository {
         if (!doc.exists) {
           throw Exception('Failed to create user document in Firestore');
         }
-
-        print('✅ Document verified. Sign up complete!');
       }
 
       return credential;
     } catch (e) {
-      print('❌ Sign up error: $e');
       rethrow;
     }
   }
 
-  /// ---------------- SIGN OUT ----------------
   Future<void> signOut() async {
     try {
       if (currentUser != null) {
-        // ✅ Update online status before signing out
         await _firestore.collection('users').doc(currentUser!.uid).set({
           'isOnline': false,
           'lastSeen': DateTime.now().millisecondsSinceEpoch,
@@ -122,7 +102,6 @@ class AuthRepository {
     }
   }
 
-  /// ------------- STATUS UPDATE -------------
   Future<void> updateOnlineStatus(bool isOnline) async {
     try {
       if (currentUser != null) {
