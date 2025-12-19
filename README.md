@@ -36,8 +36,6 @@ Make sure you have the following installed:
 
 * **Flutter SDK** ≥ 3.19.0
 * **Dart SDK** ≥ 3.3.0
-* **Android Studio** / **VS Code** (with Flutter extensions)
-* **Xcode** (for iOS development, macOS only)
 * **Firebase Account**
 * **Zego Cloud Account**
 * **Cloudinary Account**
@@ -49,7 +47,7 @@ Make sure you have the following installed:
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/new_chart.git
+git clone https://github.com/AnishTiwari5077/new_chart.git
 cd new_chart
 ```
 
@@ -95,8 +93,6 @@ ios/Runner/
 Enable the following in Firebase Console:
 
 * **Authentication** → Email/Password
-* **Cloud Firestore** → Production mode
-* **Firebase Storage**
 * **Cloud Messaging** *(optional)*
 
 ---
@@ -105,58 +101,48 @@ Enable the following in Firebase Console:
 
 ### Firestore Rules (`firestore.rules`)
 
-```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
+    
+    // ============================================
+    // SIMPLE & WORKING RULES
+    // ============================================
+    
+    // Users Collection
     match /users/{userId} {
-      allow read, create: if isSignedIn();
-      allow update, delete: if isOwner(userId);
-    }
-    match /messages/{messageId} {
-      allow read, create: if isSignedIn();
-      allow update: if isSignedIn() && resource.data.senderId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
-    }
-    match /chats/{chatId} {
-      allow read, write: if isSignedIn() && request.auth.uid in request.resource.data.participants;
-    }
-    match /friendRequests/{requestId} {
-      allow read, create: if isSignedIn();
-      allow update, delete: if isSignedIn() && (
-        resource.data.senderId == request.auth.uid ||
-        resource.data.receiverId == request.auth.uid
-      );
-    }
-    match /reactions/{reactionId} {
-      allow read, write: if isSignedIn();
-    }
-    match /typing/{docId} {
-      allow read, write: if isSignedIn();
-    }
-  }
-}
-```
-
-### Storage Rules (`storage.rules`)
-
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.resource.size < 10 * 1024 * 1024;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Chats Collection
+    match /chats/{chatId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      
+      // Messages Subcollection
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+    }
+    
+    // Friend Requests Collection - SIMPLIFIED
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
   }
 }
 ```
+
+
 
 ---
 
@@ -270,3 +256,4 @@ If you find this project helpful, **give it a star** on GitHub and feel free to 
 ---
 
 **Made with ❤️ using Flutter**
+
