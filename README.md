@@ -53,6 +53,9 @@ Make sure you have the following installed:
 <img width="315" height="700" alt="Screenshot_1766143280" src="https://github.com/user-attachments/assets/381ff46d-b72d-4322-91b9-c82effb7f22d" />
 <img width="315" height="700" alt="Screenshot_1766143271" src="https://github.com/user-attachments/assets/7139faa3-e4cb-42d6-ab4f-ff46ed26d03d" />
 <img width="315" height="700" alt="Screenshot_1766145396" src="https://github.com/user-attachments/assets/abb1c383-fa5f-4338-bd25-33d1ce810fb4" />
+<img width="315" height="700" alt="Screenshot_1766145512" src="https://github.com/user-attachments/assets/3041452a-bc32-486d-8bbc-78b36997f075" />
+<img width="315" height="700" alt="Screenshot_1766145490" src="https://github.com/user-attachments/assets/44cdcc75-e8eb-4acf-a72d-ef91bc900fc2" />
+
 
 <img width="315" height="700" alt="Screenshot_1766143266" src="https://github.com/user-attachments/assets/d7bd1b9a-1fa4-45d3-a43f-b0d355e41248" />
 <img width="315" height="700" alt="Screenshot_1766143263" src="https://github.com/user-attachments/assets/e3a0d5c6-c0f4-4ba9-a1c2-30ad9267c8cb" />
@@ -285,6 +288,7 @@ If you find this project helpful, **give it a star** on GitHub and feel free to 
 ---
 
 **Made with ❤️ using Flutter**
+
 
 
 
