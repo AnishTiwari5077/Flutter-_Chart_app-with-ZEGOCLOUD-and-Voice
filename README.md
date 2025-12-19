@@ -19,6 +19,7 @@ A **feature-rich, real-time messaging application** built with **Flutter**, **Fi
 * **Typing Indicators** — See when friends are typing *(optional)*
 * **Online Status** — Real-time online/offline indicators
 * **Last Seen** — View users’ last active time
+*  **Push Notification**-  For sending and receving message,friend Request, Reject freind (Implemented using Nodejs)
 
 ### 📎 Media & Calls
 
@@ -41,6 +42,23 @@ Make sure you have the following installed:
 * **Cloudinary Account**
 
 ---
+## ScreenShot (Light Mood)
+<img width="315" height="700" alt="Screenshot_1766143334" src="https://github.com/user-attachments/assets/d77b9e65-ad70-41b1-8839-a42bfedad5bb" />
+<img width="315" height="700" alt="Screenshot_1766143266" src="https://github.com/user-attachments/assets/33be433e-8d84-464c-b887-1060c3424de5" />
+<img width="315" height="700" alt="Screenshot_1766143263" src="https://github.com/user-attachments/assets/19d9e556-17ab-4874-86dd-b59f56d18c32" />
+<img width="315" height="700" alt="Screenshot_1766143239" src="https://github.com/user-attachments/assets/2c26b49e-6ac7-413e-ac52-96473a156619" />
+<img width="315" height="700" alt="Screenshot_1766143170" src="https://github.com/user-attachments/assets/38866a34-f3e7-46a5-ba10-b21a448d80fa" />
+<img width="315" height="700" alt="Screenshot_1766143166" src="https://github.com/user-attachments/assets/722e3984-aab0-49da-8c89-f03f5819f718" />
+<img width="315" height="700" alt="Screenshot_1766143166" src="https://github.com/user-attachments/assets/938df0d7-9d4b-46f7-85f2-a5fb4e3d8839" />
+<img width="315" height="700" alt="Screenshot_1766143149" src="https://github.com/user-attachments/assets/a65b81aa-e28e-4a8a-84cb-636f93606e0b" />
+<img width="315" height="700" alt="Screenshot_1766143146" src="https://github.com/user-attachments/assets/a5cc95fe-bde8-4a23-a17a-b94bae7f42db" />
+<img width="315" height="700" alt="Screenshot_1766143140" src="https://github.com/user-attachments/assets/d050f271-a88e-430c-9d1e-aced24e6204d" />
+<img width="315" height="700" alt="Screenshot_1766143136" src="https://github.com/user-attachments/assets/40a44b55-d4e8-4cc1-9ff2-36911d4ba51d" />
+<img width="315" height="700" alt="Screenshot_1766143061" src="https://github.com/user-attachments/assets/91376cbf-88dd-404d-88ef-22c87cf37c64" />
+<img width="315" height="700" alt="Screenshot_1766143038" src="https://github.com/user-attachments/assets/3d52a966-2964-4753-8130-b81bc7ebdb1c" />
+<img width="315" height="700" alt="Screenshot_1766143034" src="https://github.com/user-attachments/assets/2c9ed619-3634-4d92-aa80-3943c606359e" />
+<img width="315" height="700" alt="Screenshot_1766143030" src="https://github.com/user-attachments/assets/76fa14df-acd8-420c-acaf-d3d6e9bddede" />
+
 
 ## 📥 Installation
 
@@ -256,4 +274,5 @@ If you find this project helpful, **give it a star** on GitHub and feel free to 
 ---
 
 **Made with ❤️ using Flutter**
+
 
