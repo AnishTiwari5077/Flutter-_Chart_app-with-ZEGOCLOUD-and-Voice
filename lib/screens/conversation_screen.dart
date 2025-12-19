@@ -251,8 +251,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     try {
       final storageRepo = StorageRepository(
-        cloudName: 'dbllcmni2',
-        uploadPreset: 'new_chart',
+        cloudName: '',  //your cloudName
+        uploadPreset: '', // your upload preset
       );
 
       final file = File(audioPath);
@@ -298,8 +298,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     try {
       final storageRepo = StorageRepository(
-        cloudName: 'dbllcmni2',
-        uploadPreset: 'new_chart',
+        cloudName: '',
+        uploadPreset: '',
       );
       final mediaUrl = await storageRepo.uploadChatMedia(
         chatId: widget.chatId,
