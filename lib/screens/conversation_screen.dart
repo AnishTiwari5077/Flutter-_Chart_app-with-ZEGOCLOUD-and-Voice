@@ -1,26 +1,20 @@
-// lib/screens/conversation_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:new_chart/core/date_formattor.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/providers/chart_provider.dart';
 import 'package:new_chart/services/image_service.dart';
 import 'package:new_chart/services/zego_services.dart';
-
+import 'package:new_chart/widgets/message_bubble.dart';
 import 'package:new_chart/widgets/user_avatar.dart';
-import 'package:new_chart/widgets/message_reactions.dart';
 import 'package:new_chart/widgets/reaction_picker.dart';
 import 'package:new_chart/widgets/reply_preview.dart';
-
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import '../../models/user_model.dart';
 import '../widgets/voice_recorder_button.dart';
-import '../widgets/voice_message_bubble.dart';
 import '../../models/message_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/storage_repository.dart';
@@ -45,7 +39,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   final _scrollController = ScrollController();
   bool _isSending = false;
 
-  // 🆕 NEW FIELDS FOR REPLY FUNCTIONALITY
   MessageModel? _replyToMessage;
   String? _replyToSenderName;
 
@@ -116,7 +109,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
-  // 🆕 NEW METHOD: Add/remove reaction
   Future<void> _addReaction(String messageId, String emoji) async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
@@ -130,7 +122,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
-  // 🆕 NEW METHOD: Show message options bottom sheet
   Future<void> _showMessageOptions(MessageModel message) async {
     final currentUser = ref.read(currentUserProvider).value;
     final isMyMessage = message.senderId == currentUser?.uid;
@@ -172,7 +163,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     );
   }
 
-  // 🆕 NEW METHOD: Edit message
   Future<void> _editMessage(MessageModel message) async {
     final controller = TextEditingController(text: message.content);
 
@@ -224,7 +214,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     controller.dispose();
   }
 
-  // 🆕 NEW METHOD: Delete message
   Future<void> _deleteMessage(MessageModel message) async {
     final confirm = await ErrorHandler.showConfirmDialog(
       context,
@@ -251,7 +240,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     }
   }
 
-  // 🆕 NEW METHOD: Copy to clipboard
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ErrorHandler.showSuccessSnackBar(context, 'Copied to clipboard');
@@ -348,8 +336,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
       setState(() => _isSending = false);
     }
   }
-
-  // lib/screens/conversation_screen.dart (Part 2 - UI Methods and Build)
 
   Future<void> _showAttachmentOptions() async {
     final theme = Theme.of(context);
@@ -815,7 +801,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
             ),
           ),
 
-          // 🆕 Reply Preview (shows when replying to a message)
           if (_replyToMessage != null && _replyToSenderName != null)
             ReplyPreview(
               replyToMessage: _replyToMessage!,
@@ -937,231 +922,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   }
 }
 
-// ... (Continue in next part with MessageBubble and MessageOptionsSheet)
-
-class MessageBubble extends StatelessWidget {
-  final MessageModel message;
-  final bool isMe;
-  final ThemeData theme;
-  final bool isDark;
-  final String currentUserId;
-  final Function(String messageId, String emoji) onReaction;
-  final Function(MessageModel message) onLongPress;
-
-  const MessageBubble({
-    super.key,
-    required this.message,
-    required this.isMe,
-    required this.theme,
-    required this.isDark,
-    required this.currentUserId,
-    required this.onReaction,
-    required this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: () => onLongPress(message),
-      child: Align(
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
-          ),
-          decoration: BoxDecoration(
-            gradient: isMe
-                ? LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.primary.withValues(alpha: .85),
-                    ],
-                  )
-                : null,
-            color: isMe
-                ? null
-                : (isDark ? AppTheme.cardDark : Colors.grey.shade100),
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(20),
-              topRight: const Radius.circular(20),
-              bottomLeft: Radius.circular(isMe ? 20 : 4),
-              bottomRight: Radius.circular(isMe ? 4 : 20),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (message.replyToContent != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color: (isMe ? Colors.white : Colors.black).withValues(
-                      alpha: 0.1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border(
-                      left: BorderSide(
-                        color: isMe
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : theme.colorScheme.primary,
-                        width: 3,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    message.replyToContent!,
-                    style: TextStyle(
-                      color: isMe
-                          ? Colors.white.withValues(alpha: .8)
-                          : (isDark
-                                ? AppTheme.textSecondaryDark
-                                : AppTheme.textSecondaryLight),
-                      fontSize: 13,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-
-              // Message content (text or image)
-              if (message.type == MessageType.image && message.mediaUrl != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: message.mediaUrl!,
-                    placeholder: (context, url) => Container(
-                      height: 200,
-                      color: Colors.grey.shade300,
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 200,
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.error_outline_rounded, size: 48),
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                )
-              else if (message.type == MessageType.voice &&
-                  message.mediaUrl != null)
-                VoiceMessageBubble(
-                  audioUrl: message.mediaUrl!,
-                  duration: message.fileName != null
-                      ? Duration(
-                          seconds:
-                              int.tryParse(
-                                message.fileName!.replaceAll('s', ''),
-                              ) ??
-                              0,
-                        )
-                      : null,
-                  isMe: isMe,
-                  theme: theme,
-                  isDark: isDark,
-                )
-              else
-                Text(
-                  message.content,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: isMe ? Colors.white : null,
-                    fontSize: 15,
-                    height: 1.4,
-                  ),
-                ),
-
-              // 🆕 Reactions display
-              if (message.reactions != null && message.reactions!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: MessageReactions(
-                    reactions: message.reactions,
-                    currentUserId: currentUserId,
-                    onReactionTap: (emoji) =>
-                        onReaction(message.messageId, emoji),
-                    isMyMessage: isMe,
-                  ),
-                ),
-
-              const SizedBox(height: 6),
-
-              // Timestamp and read status
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 🆕 Edited indicator
-                  if (message.isEdited)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Text(
-                        'edited',
-                        style: TextStyle(
-                          color: isMe
-                              ? Colors.white.withValues(alpha: .7)
-                              : (isDark
-                                    ? AppTheme.textTertiaryDark
-                                    : AppTheme.textTertiaryLight),
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  Text(
-                    DateFormatter.formatChatTime(message.timestamp),
-                    style: TextStyle(
-                      color: isMe
-                          ? Colors.white.withValues(alpha: .85)
-                          : (isDark
-                                ? AppTheme.textTertiaryDark
-                                : AppTheme.textTertiaryLight),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  if (isMe) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      message.isRead
-                          ? Icons.done_all_rounded
-                          : Icons.done_rounded,
-                      size: 16,
-                      color: message.isRead
-                          ? Colors.lightBlueAccent
-                          : Colors.white.withValues(alpha: .85),
-                    ),
-                  ],
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/////////////////////////////////////next
-///
-///
-///
-///
-///
-///
-///
-// lib/screens/conversation_screen.dart (Part 4 - MessageOptionsSheet Widget)
-
-/// 🆕 Message Options Bottom Sheet
 class _MessageOptionsSheet extends StatelessWidget {
   final MessageModel message;
   final bool isMyMessage;
@@ -1196,7 +956,6 @@ class _MessageOptionsSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Drag Handle ───────────────────────────────
             Container(
               width: 40,
               height: 4,
@@ -1207,7 +966,6 @@ class _MessageOptionsSheet extends StatelessWidget {
               ),
             ),
 
-            // ── Emoji Reaction Picker ─────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: ReactionPicker(onReactionSelected: onReactionSelected),
@@ -1215,7 +973,6 @@ class _MessageOptionsSheet extends StatelessWidget {
 
             const Divider(height: 1),
 
-            // ── Actions ──────────────────────────────────
             _buildOption(
               context,
               icon: Icons.reply_rounded,
@@ -1255,7 +1012,6 @@ class _MessageOptionsSheet extends StatelessWidget {
     );
   }
 
-  // ✅ FIXED: onTap is nullable
   Widget _buildOption(
     BuildContext context, {
     required IconData icon,
@@ -1281,7 +1037,7 @@ class _MessageOptionsSheet extends StatelessWidget {
               : (isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight),
         ),
       ),
-      onTap: onTap, // ✅ SAFE & ANALYZER-APPROVED
+      onTap: onTap,
     );
   }
 }
