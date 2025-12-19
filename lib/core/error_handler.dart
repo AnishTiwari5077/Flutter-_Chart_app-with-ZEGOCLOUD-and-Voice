@@ -11,6 +11,7 @@ class ErrorHandler {
       return _getFirebaseErrorMessage(error);
     }
 
+    // Handle generic exceptions and errors
     return error
         .toString()
         .replaceAll('Exception: ', '')
@@ -237,8 +238,8 @@ class ErrorHandler {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return WillPopScope(
-          onWillPop: () async => false,
+        return PopScope(
+          canPop: false,
           child: AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,

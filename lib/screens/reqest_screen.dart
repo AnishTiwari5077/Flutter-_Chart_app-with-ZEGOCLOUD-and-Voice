@@ -137,27 +137,56 @@ class RequestsScreen extends ConsumerWidget {
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green,
-                                      ),
+                                    ElevatedButton(
                                       onPressed: () => _acceptRequest(
                                         context,
                                         ref,
                                         request.id,
                                         request.senderId,
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.cancel,
-                                        color: Colors.red,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
                                       ),
+                                      child: const Text(
+                                        'Confirm',
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    OutlinedButton(
                                       onPressed: () => _rejectRequest(
                                         context,
                                         ref,
                                         request.id,
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: const BorderSide(
+                                          color: Colors.red,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Reject',
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ),
                                   ],

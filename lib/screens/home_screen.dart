@@ -83,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Icons.people_rounded,
                 color: theme.colorScheme.primary,
               ),
-              label: 'Friends',
+              label: 'Users',
             ),
             NavigationDestination(
               icon: _buildRequestsBadge(
