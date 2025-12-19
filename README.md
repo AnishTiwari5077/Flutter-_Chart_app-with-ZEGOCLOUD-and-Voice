@@ -248,7 +248,7 @@ android {
 
 ---
 
-### 🍎 iOS
+###  iOS
 
 * **Minimum iOS**: 12.0
 
@@ -288,6 +288,7 @@ If you find this project helpful, **give it a star** on GitHub and feel free to 
 ---
 
 **Made with ❤️ using Flutter**
+
 
 
 
