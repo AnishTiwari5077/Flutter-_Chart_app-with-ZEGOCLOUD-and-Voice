@@ -13,7 +13,7 @@ class NotificationService {
   static late AndroidNotificationChannel _channel;
   static bool _isInitialized = false;
 
-  static const String _backendUrl = 'http://192.168.1.65:3000';
+  static const String _backendUrl = 'your URL';
 
   static const String? _apiKey = null;
 
