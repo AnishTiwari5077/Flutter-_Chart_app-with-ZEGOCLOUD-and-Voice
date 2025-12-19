@@ -129,46 +129,57 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: LoadingOverlay(
         isLoading: _isLoading,
         message: 'Updating profile...',
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(ProfileConstants.spacing),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Edit Profile',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppTheme.textPrimaryDark
-                          : AppTheme.textPrimaryLight,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: screenWidth - 48, // Account for dialog margins
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20), // Reduced from 24
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Edit Profile',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? AppTheme.textPrimaryDark
+                            : AppTheme.textPrimaryLight,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: ProfileConstants.spacing),
-                  _buildAvatarPicker(theme),
-                  const SizedBox(height: ProfileConstants.spacing),
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      prefixIcon: Icon(Icons.person_outlined),
+                    const SizedBox(height: 20),
+                    _buildAvatarPicker(theme),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        prefixIcon: Icon(Icons.person_outlined),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                      ),
+                      validator: Validators.validateUsername,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _saveChanges(),
+                      enabled: !_isLoading,
                     ),
-                    validator: Validators.validateUsername,
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _saveChanges(),
-                    enabled: !_isLoading,
-                  ),
-                  const SizedBox(height: ProfileConstants.spacing),
-                  _buildActionButtons(theme),
-                ],
+                    const SizedBox(height: 20),
+                    _buildActionButtons(theme),
+                  ],
+                ),
               ),
             ),
           ),
@@ -178,40 +189,65 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
   }
 
   Widget _buildAvatarPicker(ThemeData theme) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        GestureDetector(
-          onTap: _isLoading ? null : _pickAvatar,
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: .1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+    return Center(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: _isLoading ? null : _pickAvatar,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: .1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: CircleAvatar(
+                radius: 50, // Fixed size instead of ProfileConstants
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: .1,
                 ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: ProfileConstants.editAvatarRadius,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: .1),
-              backgroundImage: _getAvatarImage(),
-              child: _getAvatarPlaceholder(theme),
+                backgroundImage: _getAvatarImage(),
+                child: _getAvatarPlaceholder(theme),
+              ),
             ),
           ),
-        ),
-        if (_newAvatar != null)
+          if (_newAvatar != null)
+            Positioned(
+              top: -5,
+              right: -5,
+              child: GestureDetector(
+                onTap: _isLoading ? null : _removeAvatar,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
           Positioned(
-            top: -5,
-            right: -5,
+            bottom: 0,
+            right: 0,
             child: GestureDetector(
-              onTap: _isLoading ? null : _removeAvatar,
+              onTap: _isLoading ? null : _pickAvatar,
               child: Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.error,
+                  color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
@@ -221,37 +257,16 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.close, color: Colors.white, size: 16),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
             ),
           ),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: GestureDetector(
-            onTap: _isLoading ? null : _pickAvatar,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: .2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -276,19 +291,28 @@ class _EditProfileDialogState extends ConsumerState<EditProfileDialog> {
   }
 
   Widget _buildActionButtons(ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _saveChanges,
-          child: const Text('Save Changes'),
-        ),
-      ],
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Flexible(
+            child: TextButton(
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _saveChanges,
+              child: const Text('Save'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
