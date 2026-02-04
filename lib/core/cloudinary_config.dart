@@ -1,12 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/storage_repository.dart';
+import 'env_config.dart';
 
 class CloudinaryConfig {
-  static const String cloudName = ''; // Your cloud name
-  static const String uploadPreset = ''; //uploadpreset
-
-  static const String apiKey = '';// api key
-  static const String apiSecret = ''; apisecret key
+  static String get cloudName => EnvConfig.cloudinaryCloudName;
+  static String get uploadPreset => EnvConfig.cloudinaryUploadPreset;
 }
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:new_chart/core/app_string.dart';
+import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/core/validator.dart';
 import 'package:new_chart/services/image_service.dart';
@@ -25,7 +26,10 @@ class SignUpConstants {
 
 // Provider for storage repository
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
-  return StorageRepository(cloudName: '', uploadPreset: '');  /////Your cloudname  and Upload preset
+  return StorageRepository(
+    cloudName: EnvConfig.cloudinaryCloudName, //your cloudName
+    uploadPreset: EnvConfig.cloudinaryUploadPreset, // your upload preset
+  ); //your cloudName
 });
 
 class SignUpScreen extends ConsumerStatefulWidget {

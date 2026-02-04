@@ -1,10 +1,10 @@
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
+import '../core/env_config.dart';
 
 class ZegoService {
-  static const int appID = ; //your appID
-  static const String appSign =
-      "";//your appsignid
+  static int get appID => EnvConfig.zegoAppId;
+  static String get appSign => EnvConfig.zegoAppSign;
 
   static bool _isInitialized = false;
 
@@ -13,24 +13,19 @@ class ZegoService {
     required String userName,
   }) async {
     if (appID == 0 || appSign.isEmpty) {
-      return;
+      throw Exception('ZEGO credentials not configured');
     }
 
-    if (_isInitialized) {
-      return;
-    }
+    if (_isInitialized) return;
 
     await ZegoUIKitPrebuiltCallInvitationService().init(
       appID: appID,
       appSign: appSign,
       userID: userId,
       userName: userName,
-
       plugins: [ZegoUIKitSignalingPlugin()],
-
       requireConfig: (ZegoCallInvitationData data) {
         final bool isGroup = data.invitees.length > 1;
-
         final bool isVideo = data.type == ZegoCallInvitationType.videoCall;
 
         if (isGroup) {
@@ -49,10 +44,7 @@ class ZegoService {
   }
 
   static Future<void> uninitializeZego() async {
-    if (!_isInitialized) {
-      return;
-    }
-
+    if (!_isInitialized) return;
     await ZegoUIKitPrebuiltCallInvitationService().uninit();
     _isInitialized = false;
   }

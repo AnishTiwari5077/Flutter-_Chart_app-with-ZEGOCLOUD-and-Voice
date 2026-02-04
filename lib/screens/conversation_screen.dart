@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:new_chart/core/date_formattor.dart';
+import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/providers/chart_provider.dart';
 import 'package:new_chart/services/image_service.dart';
@@ -251,8 +252,8 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     try {
       final storageRepo = StorageRepository(
-        cloudName: '',  //your cloudName
-        uploadPreset: '', // your upload preset
+        cloudName: EnvConfig.cloudinaryCloudName, //your cloudName
+        uploadPreset: EnvConfig.cloudinaryUploadPreset, // your upload preset
       );
 
       final file = File(audioPath);
@@ -297,10 +298,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     setState(() => _isSending = true);
 
     try {
-      final storageRepo = StorageRepository(
-        cloudName: '',
-        uploadPreset: '',
-      );
+      final storageRepo = StorageRepository(cloudName: '', uploadPreset: '');
       final mediaUrl = await storageRepo.uploadChatMedia(
         chatId: widget.chatId,
         file: file,

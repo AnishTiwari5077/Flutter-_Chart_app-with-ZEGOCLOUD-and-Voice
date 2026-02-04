@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 
 import 'package:new_chart/widgets/loading_overlay.dart';
@@ -30,8 +31,9 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
   return StorageRepository(
-    cloudName: '', //your cloudNmae
-    uploadPreset: '',  //your upload preset
+    cloudName: EnvConfig.cloudinaryCloudName, //your cloudName
+    uploadPreset: EnvConfig.cloudinaryUploadPreset, // your upload preset
+    //your upload preset
   );
 });
 

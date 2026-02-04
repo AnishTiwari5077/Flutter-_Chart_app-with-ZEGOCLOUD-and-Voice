@@ -229,20 +229,6 @@ class ImagePickerService {
                 }
               },
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.close, color: Colors.red),
-              ),
-              title: const Text('Cancel'),
-              onTap: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 10),
           ],
         ),
       ),
