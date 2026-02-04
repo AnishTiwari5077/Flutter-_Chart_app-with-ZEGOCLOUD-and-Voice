@@ -2,11 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../repositories/storage_repository.dart';
 
 class CloudinaryConfig {
-  static const String cloudName = 'dbllcmni2';
-  static const String uploadPreset = 'new_chart';
+  static const String cloudName = ''; // Your cloud name
+  static const String uploadPreset = ''; //uploadpreset
 
-  static const String apiKey = '314485714938889';
-  static const String apiSecret = 'hS5Yvzqo4a7ywFBXc0uRmproVFQ';
+  static const String apiKey = '';// api key
+  static const String apiSecret = ''; apisecret key
 }
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {

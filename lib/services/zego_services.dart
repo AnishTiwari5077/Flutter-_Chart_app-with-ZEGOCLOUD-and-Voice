@@ -2,9 +2,9 @@ import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 class ZegoService {
-  static const int appID = 1367841437;
+  static const int appID = ; //your appID
   static const String appSign =
-      "bf5ca79fb469242e19cc0b3d8d16a3df9ac3e32289e1ad9b35010d052613dece";
+      "";//your appsignid
 
   static bool _isInitialized = false;
 

@@ -25,7 +25,7 @@ class SignUpConstants {
 
 // Provider for storage repository
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
-  return StorageRepository(cloudName: 'dbllcmni2', uploadPreset: 'new_chart');
+  return StorageRepository(cloudName: '', uploadPreset: '');  /////Your cloudname  and Upload preset
 });
 
 class SignUpScreen extends ConsumerStatefulWidget {

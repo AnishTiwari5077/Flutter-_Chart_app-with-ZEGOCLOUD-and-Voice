@@ -50,22 +50,22 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD2u-NDY_ysubP4zMsRKfHBKeppkMeVjYY',
-    appId: '1:441627342788:android:bde2d07da73a9a004ed691',
-    messagingSenderId: '441627342788',
-    projectId: 'chart-app11',
-    databaseURL: 'https://chart-app11-default-rtdb.firebaseio.com',
-    storageBucket: 'chart-app11.firebasestorage.app',
+    apiKey: '',
+    appId: '',
+    messagingSenderId: '',
+    projectId: '',
+    databaseURL: '',
+    storageBucket: '',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyC2hRN-wvD7Ui_ql4iv4oaW5EencarPr9k',
-    appId: '1:441627342788:ios:90691d3ba8ac052d4ed691',
-    messagingSenderId: '441627342788',
-    projectId: 'chart-app11',
-    databaseURL: 'https://chart-app11-default-rtdb.firebaseio.com',
-    storageBucket: 'chart-app11.firebasestorage.app',
-    iosBundleId: 'com.example.newChart',
+    apiKey: '',
+    appId: '',
+    messagingSender:'',
+    projectId: '',
+    databaseURL: '',
+    storageBucket: '',
+    iosBundleId: '',
   );
 
 }

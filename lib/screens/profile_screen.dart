@@ -30,8 +30,8 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
 
 final storageRepositoryProvider = Provider<StorageRepository>((ref) {
   return StorageRepository(
-    cloudName: 'dbllcmni2',
-    uploadPreset: 'flutter_present',
+    cloudName: '', //your cloudNmae
+    uploadPreset: '',  //your upload preset
   );
 });
 
