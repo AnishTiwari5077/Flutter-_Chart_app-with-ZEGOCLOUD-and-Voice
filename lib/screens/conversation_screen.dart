@@ -298,7 +298,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     setState(() => _isSending = true);
 
     try {
-      final storageRepo = StorageRepository(cloudName: '', uploadPreset: '');
+      final storageRepo = StorageRepository(
+        cloudName: EnvConfig.cloudinaryCloudName,
+        uploadPreset: EnvConfig.cloudinaryUploadPreset,
+      );
       final mediaUrl = await storageRepo.uploadChatMedia(
         chatId: widget.chatId,
         file: file,
