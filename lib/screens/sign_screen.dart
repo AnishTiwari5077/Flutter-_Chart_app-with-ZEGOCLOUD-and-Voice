@@ -49,6 +49,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
   @override
   void dispose() {
+    // ✅ OPTIMIZED: Proper cleanup
     _animationController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -57,6 +58,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // ✅ OPTIMIZED: Unfocus keyboard before async operation
+    FocusScope.of(context).unfocus();
 
     setState(() => _isLoading = true);
 
@@ -67,6 +71,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             _emailController.text.trim(),
             _passwordController.text,
           );
+      // Navigation handled by AuthWrapper, no need to do anything here
     } catch (e) {
       if (mounted) {
         ErrorHandler.showErrorSnackBar(
@@ -169,6 +174,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                         prefixIcon: Icons.email_rounded,
                         keyboardType: TextInputType.emailAddress,
                         validator: Validators.validateEmail,
+                        textInputAction: TextInputAction.next,
+                        enabled: !_isLoading,
                       ),
 
                       const SizedBox(height: 20),
@@ -179,6 +186,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                         label: 'Password',
                         prefixIcon: Icons.lock_rounded,
                         obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        enabled: !_isLoading,
+                        onFieldSubmitted: (_) => _signIn(),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -200,9 +210,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {
-                            // Implement forgot password
-                          },
+                          onPressed: _isLoading
+                              ? null
+                              : () {
+                                  // TODO: Implement forgot password
+                                  ErrorHandler.showInfoSnackBar(
+                                    context,
+                                    'Forgot password feature coming soon!',
+                                  );
+                                },
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -242,20 +258,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: _signIn,
+                          onPressed: _isLoading ? null : _signIn,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,
                             minimumSize: const Size(double.infinity, 52),
                           ),
-                          child: const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                         ),
                       ),
 
@@ -311,13 +338,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                             ),
                           ),
                           GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SignUpScreen(),
-                                ),
-                              );
-                            },
+                            onTap: _isLoading
+                                ? null
+                                : () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignUpScreen(),
+                                      ),
+                                    );
+                                  },
                             child: Text(
                               'Sign Up',
                               style: theme.textTheme.bodyMedium?.copyWith(

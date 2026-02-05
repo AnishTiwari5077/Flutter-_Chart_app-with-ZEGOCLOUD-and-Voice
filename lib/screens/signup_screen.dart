@@ -13,7 +13,6 @@ import 'package:new_chart/widgets/loading_overlay.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
-
 import '../../repositories/storage_repository.dart';
 
 // Constants
@@ -24,12 +23,14 @@ class SignUpConstants {
   static const double largeSpacing = 32.0;
 }
 
-// Provider for storage repository
-final storageRepositoryProvider = Provider<StorageRepository>((ref) {
+// ✅ OPTIMIZED: Use autoDispose to prevent memory leaks
+final storageRepositoryProvider = Provider.autoDispose<StorageRepository>((
+  ref,
+) {
   return StorageRepository(
-    cloudName: EnvConfig.cloudinaryCloudName, //your cloudName
-    uploadPreset: EnvConfig.cloudinaryUploadPreset, // your upload preset
-  ); //your cloudName
+    cloudName: EnvConfig.cloudinaryCloudName,
+    uploadPreset: EnvConfig.cloudinaryUploadPreset,
+  );
 });
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -53,11 +54,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   void dispose() {
+    // ✅ OPTIMIZED: Proper cleanup
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _avatarImage = null;
+
+    // Clear file reference
+    if (_avatarImage != null) {
+      _avatarImage = null;
+    }
+
     super.dispose();
   }
 
@@ -66,34 +73,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     try {
       await ImagePickerService.showImageSourceDialog(context, (file) async {
-        debugPrint('Callback received file: ${file?.path}');
-
-        if (file != null) {
-          if (await file.exists()) {
-            final fileSize = await file.length();
-            debugPrint('File exists, size: $fileSize bytes');
-
-            if (mounted) {
-              setState(() {
-                _avatarImage = file;
-              });
-              debugPrint('State updated with new avatar');
-            }
-          } else {
-            debugPrint('File does not exist at path: ${file.path}');
-            if (mounted) {
-              ErrorHandler.showErrorSnackBar(
-                context,
-                'Selected image file not found',
-              );
-            }
+        if (file != null && await file.exists()) {
+          if (mounted) {
+            setState(() {
+              _avatarImage = file;
+            });
           }
-        } else {
-          debugPrint('No file selected');
+        } else if (file != null) {
+          if (mounted) {
+            ErrorHandler.showErrorSnackBar(
+              context,
+              'Selected image file not found',
+            );
+          }
         }
       }, allowCrop: true);
     } catch (e) {
-      debugPrint('Error in _pickAvatar: $e');
       if (mounted) {
         ErrorHandler.showErrorSnackBar(
           context,
@@ -132,15 +127,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       // Upload avatar if selected
       if (_avatarImage != null) {
-        debugPrint('📤 Uploading avatar...');
         final tempUserId = DateTime.now().millisecondsSinceEpoch.toString();
         final storageRepo = ref.read(storageRepositoryProvider);
         avatarUrl = await storageRepo.uploadAvatar(tempUserId, _avatarImage!);
-        debugPrint('✅ Avatar uploaded: $avatarUrl');
       }
 
       // Create user account
-      debugPrint('📝 Creating user account...');
       await ref
           .read(authRepositoryProvider)
           .signUpWithEmailAndPassword(
@@ -150,14 +142,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             avatarUrl: avatarUrl,
           );
 
-      debugPrint('✅ User account created successfully');
-
-      // ✅ Clear form and loading state
       if (mounted) {
         _clearForm();
         setState(() => _isLoading = false);
 
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Account created successfully!'),
@@ -165,12 +153,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             duration: Duration(seconds: 2),
           ),
         );
-
-        // ✅ Let AuthenticationWrapper handle navigation automatically
-        // The auth state will update and navigate to HomeScreen
       }
     } catch (e) {
-      debugPrint('❌ Sign up error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ErrorHandler.showErrorSnackBar(
@@ -228,12 +212,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                   const SizedBox(height: SignUpConstants.largeSpacing),
 
-                  // Avatar Picker
-                  _buildAvatarPicker(theme, isDark),
+                  // ✅ OPTIMIZED: Extracted avatar picker to reduce rebuilds
+                  _AvatarPicker(
+                    avatarImage: _avatarImage,
+                    isLoading: _isLoading,
+                    onPickAvatar: _pickAvatar,
+                    onRemoveAvatar: _removeAvatar,
+                    theme: theme,
+                    isDark: isDark,
+                  ),
 
                   const SizedBox(height: 8),
 
-                  // Avatar instruction
                   Text(
                     'Tap to add profile photo',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -415,13 +405,33 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
     );
   }
+}
 
-  Widget _buildAvatarPicker(ThemeData theme, bool isDark) {
+// ✅ OPTIMIZED: Extracted avatar picker to separate widget
+class _AvatarPicker extends StatelessWidget {
+  final File? avatarImage;
+  final bool isLoading;
+  final VoidCallback onPickAvatar;
+  final VoidCallback onRemoveAvatar;
+  final ThemeData theme;
+  final bool isDark;
+
+  const _AvatarPicker({
+    required this.avatarImage,
+    required this.isLoading,
+    required this.onPickAvatar,
+    required this.onRemoveAvatar,
+    required this.theme,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Stack(
         children: [
           GestureDetector(
-            onTap: _isLoading ? null : _pickAvatar,
+            onTap: isLoading ? null : onPickAvatar,
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -434,15 +444,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ],
               ),
               child: CircleAvatar(
-                key: ValueKey(_avatarImage?.path ?? 'no_image'),
+                key: ValueKey(avatarImage?.path ?? 'no_image'),
                 radius: SignUpConstants.avatarRadius,
                 backgroundColor: theme.colorScheme.primary.withValues(
                   alpha: .1,
                 ),
-                backgroundImage: _avatarImage != null
-                    ? FileImage(_avatarImage!)
+                backgroundImage: avatarImage != null
+                    ? FileImage(avatarImage!)
                     : null,
-                child: _avatarImage == null
+                child: avatarImage == null
                     ? Icon(
                         Icons.person_outlined,
                         size: SignUpConstants.avatarRadius,
@@ -454,12 +464,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ),
 
           // Remove Button
-          if (_avatarImage != null)
+          if (avatarImage != null)
             Positioned(
               top: 0,
               right: 0,
               child: GestureDetector(
-                onTap: _isLoading ? null : _removeAvatar,
+                onTap: isLoading ? null : onRemoveAvatar,
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -483,7 +493,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             bottom: 0,
             right: 0,
             child: GestureDetector(
-              onTap: _isLoading ? null : _pickAvatar,
+              onTap: isLoading ? null : onPickAvatar,
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
