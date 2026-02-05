@@ -71,7 +71,7 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
       .doc(chatId)
       .collection('messages')
       .orderBy('timestamp', descending: true)
-      .limit(20) // ✅ Load only 20 messages initially
+      //  .limit(20) // ✅ Load only 20 messages initially
       .snapshots()
       .map((snapshot) {
         return snapshot.docs
