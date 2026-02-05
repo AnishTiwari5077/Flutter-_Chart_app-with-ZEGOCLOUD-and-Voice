@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
 import 'package:new_chart/core/date_formattor.dart';
 import 'package:new_chart/models/message_model.dart';
 import 'package:new_chart/theme/app_theme.dart';
@@ -107,6 +108,10 @@ class MessageBubble extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: CachedNetworkImage(
                     imageUrl: message.mediaUrl!,
+                    memCacheWidth: 800, // ✅ Limit memory cache
+                    memCacheHeight: 800,
+                    maxWidthDiskCache: 1200, // ✅ Limit disk cache
+                    maxHeightDiskCache: 1200,
                     placeholder: (context, url) => Container(
                       height: 200,
                       color: Colors.grey.shade300,
@@ -118,6 +123,9 @@ class MessageBubble extends StatelessWidget {
                       child: const Icon(Icons.error_outline_rounded, size: 48),
                     ),
                     fit: BoxFit.cover,
+                    fadeInDuration: const Duration(
+                      milliseconds: 200,
+                    ), // ✅ Smooth fade
                   ),
                 )
               else if (message.type == MessageType.voice &&

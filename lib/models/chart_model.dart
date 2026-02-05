@@ -6,6 +6,7 @@ class ChatModel {
   final String? lastMessage;
   final DateTime? lastMessageTime;
   final Map<String, int> unreadCount;
+  final Map<String, Map<String, dynamic>>? participantsData; // ✅ ADDED
 
   ChatModel({
     required this.chatId,
@@ -13,6 +14,7 @@ class ChatModel {
     this.lastMessage,
     this.lastMessageTime,
     required this.unreadCount,
+    this.participantsData, // ✅ ADDED
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +24,7 @@ class ChatModel {
       'lastMessage': lastMessage,
       'lastMessageTime': lastMessageTime?.millisecondsSinceEpoch,
       'unreadCount': unreadCount,
+      'participantsData': participantsData, // ✅ ADDED
     };
   }
 
@@ -31,12 +34,12 @@ class ChatModel {
       participants: List<String>.from(
         (map['participants'] ?? []).map((e) => e.toString()),
       ),
-
       lastMessage: map['lastMessage']?.toString(),
-
       lastMessageTime: _parseDate(map['lastMessageTime']),
-
       unreadCount: _parseUnread(map['unreadCount']),
+      participantsData: _parseParticipantsData(
+        map['participantsData'],
+      ), // ✅ ADDED
     );
   }
 
@@ -66,6 +69,23 @@ class ChatModel {
       );
     } catch (_) {
       return {};
+    }
+  }
+
+  // ✅ ADDED: Parse participants data
+  static Map<String, Map<String, dynamic>>? _parseParticipantsData(
+    dynamic value,
+  ) {
+    if (value == null) return null;
+
+    try {
+      final raw = Map<String, dynamic>.from(value);
+      return raw.map(
+        (key, val) =>
+            MapEntry(key.toString(), Map<String, dynamic>.from(val as Map)),
+      );
+    } catch (_) {
+      return null;
     }
   }
 }

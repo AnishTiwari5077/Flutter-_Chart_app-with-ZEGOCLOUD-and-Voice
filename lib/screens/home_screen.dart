@@ -4,7 +4,7 @@ import 'package:new_chart/providers/friend_req_provider.dart';
 import 'package:new_chart/screens/chart_list_screen.dart';
 import 'package:new_chart/screens/profile_screen.dart';
 import 'package:new_chart/screens/reqest_screen.dart';
-import 'package:new_chart/screens/user_list_screem.dart';
+import 'package:new_chart/screens/user_list_screen.dart';
 
 import '../theme/app_theme.dart';
 

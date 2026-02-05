@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+
 import 'package:new_chart/core/date_formattor.dart';
 import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/providers/chart_provider.dart';
+
 import 'package:new_chart/services/image_service.dart';
 import 'package:new_chart/services/zego_services.dart';
 import 'package:new_chart/widgets/message_bubble.dart';
@@ -36,9 +38,7 @@ class ConversationScreen extends ConsumerStatefulWidget {
 }
 
 class _ConversationScreenState extends ConsumerState<ConversationScreen> {
-  final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  bool _isSending = false;
 
   MessageModel? _replyToMessage;
   String? _replyToSenderName;
@@ -53,7 +53,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
   @override
   void dispose() {
-    _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -81,35 +80,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     });
   }
 
-  Future<void> _sendTextMessage() async {
-    if (_messageController.text.trim().isEmpty || _isSending) return;
-
-    final content = _messageController.text.trim();
-    _messageController.clear();
-
-    setState(() => _isSending = true);
-
-    try {
-      await ref
-          .read(chatServiceProvider)
-          .sendMessage(
-            chatId: widget.chatId,
-            receiverId: widget.friend.uid,
-            content: content,
-            type: MessageType.text,
-            replyToMessageId: _replyToMessage?.messageId,
-            replyToContent: _replyToMessage?.content,
-            replyToSenderId: _replyToMessage?.senderId,
-          );
-
-      _cancelReply(); // Clear reply after sending
-    } catch (e) {
-      ErrorHandler.showErrorSnackBar(context, ErrorHandler.getErrorMessage(e));
-    } finally {
-      setState(() => _isSending = false);
-    }
-  }
-
   Future<void> _addReaction(String messageId, String emoji) async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
@@ -119,7 +89,12 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
           .read(messageServiceProvider)
           .addReaction(widget.chatId, messageId, emoji, currentUser.uid);
     } catch (e) {
-      ErrorHandler.showErrorSnackBar(context, ErrorHandler.getErrorMessage(e));
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
     }
   }
 
@@ -244,246 +219,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   void _copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ErrorHandler.showSuccessSnackBar(context, 'Copied to clipboard');
-  }
-
-  /// Send voice message
-  Future<void> _sendVoiceMessage(String audioPath, Duration duration) async {
-    setState(() => _isSending = true);
-
-    try {
-      final storageRepo = StorageRepository(
-        cloudName: EnvConfig.cloudinaryCloudName, //your cloudName
-        uploadPreset: EnvConfig.cloudinaryUploadPreset, // your upload preset
-      );
-
-      final file = File(audioPath);
-      final audioUrl = await storageRepo.uploadChatMedia(
-        chatId: widget.chatId,
-        file: file,
-        fileType: 'voice',
-      );
-
-      await ref
-          .read(chatServiceProvider)
-          .sendMessage(
-            chatId: widget.chatId,
-            receiverId: widget.friend.uid,
-            content: 'Voice message',
-            type: MessageType.voice,
-            mediaUrl: audioUrl,
-            fileName: '${duration.inSeconds}s',
-          );
-
-      // Delete temporary file
-      if (await file.exists()) {
-        await file.delete();
-      }
-
-      if (mounted) {
-        ErrorHandler.showSuccessSnackBar(context, 'Voice message sent');
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(
-          context,
-          ErrorHandler.getErrorMessage(e),
-        );
-      }
-    } finally {
-      setState(() => _isSending = false);
-    }
-  }
-
-  Future<void> _sendMediaMessage(MessageType type, File file) async {
-    setState(() => _isSending = true);
-
-    try {
-      final storageRepo = StorageRepository(
-        cloudName: EnvConfig.cloudinaryCloudName,
-        uploadPreset: EnvConfig.cloudinaryUploadPreset,
-      );
-      final mediaUrl = await storageRepo.uploadChatMedia(
-        chatId: widget.chatId,
-        file: file,
-        fileType: type.toString().split('.').last,
-      );
-
-      await ref
-          .read(chatServiceProvider)
-          .sendMessage(
-            chatId: widget.chatId,
-            receiverId: widget.friend.uid,
-            content: type == MessageType.image
-                ? 'Image'
-                : type == MessageType.video
-                ? 'Video'
-                : 'File',
-            type: type,
-            mediaUrl: mediaUrl,
-            fileName: file.path.split('/').last,
-          );
-
-      if (mounted) {
-        ErrorHandler.showSuccessSnackBar(context, 'Sent successfully');
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showErrorSnackBar(
-          context,
-          ErrorHandler.getErrorMessage(e),
-        );
-      }
-    } finally {
-      setState(() => _isSending = false);
-    }
-  }
-
-  Future<void> _showAttachmentOptions() async {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Send Attachment',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildAttachmentOption(
-                      icon: Icons.image_rounded,
-                      label: 'Photo',
-                      color: Colors.blue,
-                      onTap: () async {
-                        Navigator.pop(context);
-                        final image =
-                            await ImagePickerService.pickImageFromGallery();
-                        if (image != null) {
-                          await _sendMediaMessage(MessageType.image, image);
-                        }
-                      },
-                      theme: theme,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildAttachmentOption(
-                      icon: Icons.videocam_rounded,
-                      label: 'Video',
-                      color: Colors.red,
-                      onTap: () async {
-                        Navigator.pop(context);
-                        final video =
-                            await ImagePickerService.pickVideoFromGallery();
-                        if (video != null) {
-                          await _sendMediaMessage(MessageType.video, video);
-                        }
-                      },
-                      theme: theme,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildAttachmentOption(
-                      icon: Icons.insert_drive_file_rounded,
-                      label: 'Document',
-                      color: Colors.orange,
-                      onTap: () async {
-                        Navigator.pop(context);
-                        final result = await FilePicker.platform.pickFiles();
-                        if (result != null &&
-                            result.files.single.path != null) {
-                          final file = File(result.files.single.path!);
-                          await _sendMediaMessage(MessageType.file, file);
-                        }
-                      },
-                      theme: theme,
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentOption({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-    required ThemeData theme,
-    required bool isDark,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark
-                ? color.withValues(alpha: .1)
-                : color.withValues(alpha: .05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: .3), width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: .3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                label,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _clearConversation() async {
@@ -688,7 +423,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
       ),
       body: Column(
         children: [
-          // Messages List
+          // ✅ OPTIMIZED: Messages List with keys
           Expanded(
             child: messagesAsync.when(
               data: (messages) {
@@ -733,6 +468,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 }
 
                 return ListView.builder(
+                  key: const PageStorageKey('messages_list'), // ✅ Added key
                   controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.all(16),
@@ -742,6 +478,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                     final isMe = message.senderId == currentUser?.uid;
 
                     return MessageBubble(
+                      key: ValueKey(message.messageId), // ✅ Added unique key
                       message: message,
                       isMe: isMe,
                       theme: theme,
@@ -809,113 +546,14 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
               onCancel: _cancelReply,
             ),
 
-          // Message Input
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.add_circle_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 28,
-                    ),
-                    onPressed: _showAttachmentOptions,
-                    tooltip: 'Attach file',
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF2A2A2A)
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: InputDecoration(
-                          hintText: 'Message...',
-                          hintStyle: TextStyle(
-                            color: isDark
-                                ? AppTheme.textTertiaryDark
-                                : AppTheme.textTertiaryLight,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                        style: theme.textTheme.bodyLarge,
-                        maxLines: null,
-                        textCapitalization: TextCapitalization.sentences,
-                        onChanged: (value) => setState(
-                          () {},
-                        ), // Rebuild to show/hide voice button
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  if (_isSending)
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (_messageController.text.isEmpty)
-                    VoiceRecorderButton(onRecordingComplete: _sendVoiceMessage)
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.primary.withValues(alpha: .8),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withValues(
-                              alpha: .3,
-                            ),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.send_rounded,
-                          color: Colors.white,
-                        ),
-                        onPressed: _sendTextMessage,
-                        tooltip: 'Send',
-                      ),
-                    ),
-                ],
-              ),
-            ),
+          // ✅ OPTIMIZED: Extracted message input to separate widget
+          _MessageInput(
+            chatId: widget.chatId,
+            friendUid: widget.friend.uid,
+            friendUsername: widget.friend.username,
+            replyToMessage: _replyToMessage,
+            replyToSenderName: _replyToSenderName,
+            onCancelReply: _cancelReply,
           ),
         ],
       ),
@@ -923,10 +561,437 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   }
 }
 
+// ✅ OPTIMIZED: Separate widget to prevent unnecessary rebuilds
+class _MessageInput extends ConsumerStatefulWidget {
+  final String chatId;
+  final String friendUid;
+  final String friendUsername;
+  final MessageModel? replyToMessage;
+  final String? replyToSenderName;
+  final VoidCallback onCancelReply;
+
+  const _MessageInput({
+    required this.chatId,
+    required this.friendUid,
+    required this.friendUsername,
+    this.replyToMessage,
+    this.replyToSenderName,
+    required this.onCancelReply,
+  });
+
+  @override
+  ConsumerState<_MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends ConsumerState<_MessageInput> {
+  final _messageController = TextEditingController();
+  bool _isSending = false;
+  bool _hasText = false;
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendTextMessage() async {
+    if (_messageController.text.trim().isEmpty || _isSending) return;
+
+    final content = _messageController.text.trim();
+    _messageController.clear();
+    setState(() {
+      _isSending = true;
+      _hasText = false;
+    });
+
+    try {
+      await ref
+          .read(chatServiceProvider)
+          .sendMessage(
+            chatId: widget.chatId,
+            receiverId: widget.friendUid,
+            content: content,
+            type: MessageType.text,
+            replyToMessageId: widget.replyToMessage?.messageId,
+            replyToContent: widget.replyToMessage?.content,
+            replyToSenderId: widget.replyToMessage?.senderId,
+          );
+
+      widget.onCancelReply();
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  Future<void> _sendVoiceMessage(String audioPath, Duration duration) async {
+    setState(() => _isSending = true);
+
+    try {
+      final storageRepo = StorageRepository(
+        cloudName: EnvConfig.cloudinaryCloudName,
+        uploadPreset: EnvConfig.cloudinaryUploadPreset,
+      );
+
+      final file = File(audioPath);
+      final audioUrl = await storageRepo.uploadChatMedia(
+        chatId: widget.chatId,
+        file: file,
+        fileType: 'voice',
+      );
+
+      await ref
+          .read(chatServiceProvider)
+          .sendMessage(
+            chatId: widget.chatId,
+            receiverId: widget.friendUid,
+            content: 'Voice message',
+            type: MessageType.voice,
+            mediaUrl: audioUrl,
+            fileName: '${duration.inSeconds}s',
+          );
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      if (mounted) {
+        ErrorHandler.showSuccessSnackBar(context, 'Voice message sent');
+      }
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  Future<void> _sendMediaMessage(MessageType type, File file) async {
+    setState(() => _isSending = true);
+
+    try {
+      final storageRepo = StorageRepository(
+        cloudName: EnvConfig.cloudinaryCloudName,
+        uploadPreset: EnvConfig.cloudinaryUploadPreset,
+      );
+      final mediaUrl = await storageRepo.uploadChatMedia(
+        chatId: widget.chatId,
+        file: file,
+        fileType: type.toString().split('.').last,
+      );
+
+      await ref
+          .read(chatServiceProvider)
+          .sendMessage(
+            chatId: widget.chatId,
+            receiverId: widget.friendUid,
+            content: type == MessageType.image
+                ? 'Image'
+                : type == MessageType.video
+                ? 'Video'
+                : 'File',
+            type: type,
+            mediaUrl: mediaUrl,
+            fileName: file.path.split('/').last,
+          );
+
+      if (mounted) {
+        ErrorHandler.showSuccessSnackBar(context, 'Sent successfully');
+      }
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
+  }
+
+  Future<void> _showAttachmentOptions() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Send Attachment',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildAttachmentOption(
+                      icon: Icons.image_rounded,
+                      label: 'Photo',
+                      color: Colors.blue,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final image =
+                            await ImagePickerService.pickImageFromGallery();
+                        if (image != null) {
+                          await _sendMediaMessage(MessageType.image, image);
+                        }
+                      },
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildAttachmentOption(
+                      icon: Icons.videocam_rounded,
+                      label: 'Video',
+                      color: Colors.red,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final video =
+                            await ImagePickerService.pickVideoFromGallery();
+                        if (video != null) {
+                          await _sendMediaMessage(MessageType.video, video);
+                        }
+                      },
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildAttachmentOption(
+                      icon: Icons.insert_drive_file_rounded,
+                      label: 'Document',
+                      color: Colors.orange,
+                      onTap: () async {
+                        Navigator.pop(context);
+                        final result = await FilePicker.platform.pickFiles();
+                        if (result != null &&
+                            result.files.single.path != null) {
+                          final file = File(result.files.single.path!);
+                          await _sendMediaMessage(MessageType.file, file);
+                        }
+                      },
+                      theme: theme,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark
+                ? color.withValues(alpha: .1)
+                : color.withValues(alpha: .05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: .3), width: 1),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: .3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.add_circle_rounded,
+                color: theme.colorScheme.primary,
+                size: 28,
+              ),
+              onPressed: _showAttachmentOptions,
+              tooltip: 'Attach file',
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: 'Message...',
+                    hintStyle: TextStyle(
+                      color: isDark
+                          ? AppTheme.textTertiaryDark
+                          : AppTheme.textTertiaryLight,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  style: theme.textTheme.bodyLarge,
+                  maxLines: null,
+                  textCapitalization: TextCapitalization.sentences,
+                  onChanged: (value) {
+                    // ✅ OPTIMIZED: Only rebuild when text presence changes
+                    final newHasText = value.isNotEmpty;
+                    if (newHasText != _hasText) {
+                      setState(() => _hasText = newHasText);
+                    }
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            if (_isSending)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              )
+            else if (!_hasText)
+              VoiceRecorderButton(onRecordingComplete: _sendVoiceMessage)
+            else
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary,
+                      theme.colorScheme.primary.withValues(alpha: .8),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: .3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.send_rounded, color: Colors.white),
+                  onPressed: _sendTextMessage,
+                  tooltip: 'Send',
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Message Options Sheet
 class _MessageOptionsSheet extends StatelessWidget {
   final MessageModel message;
   final bool isMyMessage;
-
   final Function(String emoji) onReactionSelected;
   final VoidCallback onReply;
   final VoidCallback? onEdit;
@@ -966,21 +1031,17 @@ class _MessageOptionsSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: ReactionPicker(onReactionSelected: onReactionSelected),
             ),
-
             const Divider(height: 1),
-
             _buildOption(
               context,
               icon: Icons.reply_rounded,
               label: 'Reply',
               onTap: onReply,
             ),
-
             if (onEdit != null && message.type == MessageType.text)
               _buildOption(
                 context,
@@ -988,7 +1049,6 @@ class _MessageOptionsSheet extends StatelessWidget {
                 label: 'Edit',
                 onTap: onEdit,
               ),
-
             if (message.type == MessageType.text)
               _buildOption(
                 context,
@@ -996,7 +1056,6 @@ class _MessageOptionsSheet extends StatelessWidget {
                 label: 'Copy',
                 onTap: onCopy,
               ),
-
             if (onDelete != null)
               _buildOption(
                 context,
@@ -1005,7 +1064,6 @@ class _MessageOptionsSheet extends StatelessWidget {
                 onTap: onDelete,
                 isDestructive: true,
               ),
-
             const SizedBox(height: 8),
           ],
         ),
