@@ -1,3 +1,5 @@
+// lib/models/user_model.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
@@ -11,6 +13,11 @@ class UserModel {
   final DateTime createdAt;
   final List<String> searchKeywords;
 
+  // ✅ NEW: Block and typing features
+  final List<String> blockedUsers;
+  final bool isTyping;
+  final String? typingInChatId;
+
   UserModel({
     required this.uid,
     required this.email,
@@ -21,6 +28,9 @@ class UserModel {
     required this.fcmToken,
     required this.createdAt,
     required this.searchKeywords,
+    this.blockedUsers = const [],
+    this.isTyping = false,
+    this.typingInChatId,
   });
 
   /// Convert to Firestore Map
@@ -35,6 +45,9 @@ class UserModel {
       'fcmToken': fcmToken,
       'createdAt': createdAt.toIso8601String(),
       'searchKeywords': searchKeywords,
+      'blockedUsers': blockedUsers,
+      'isTyping': isTyping,
+      'typingInChatId': typingInChatId,
     };
   }
 
@@ -49,6 +62,9 @@ class UserModel {
       fcmToken: map['fcmToken'] as String? ?? '',
       createdAt: _parseDateTime(map['createdAt']) ?? DateTime.now(),
       searchKeywords: _parseSearchKeywords(map['searchKeywords']),
+      blockedUsers: _parseSearchKeywords(map['blockedUsers']),
+      isTyping: map['isTyping'] as bool? ?? false,
+      typingInChatId: map['typingInChatId'] as String?,
     );
   }
 
@@ -102,6 +118,9 @@ class UserModel {
     String? fcmToken,
     DateTime? createdAt,
     List<String>? searchKeywords,
+    List<String>? blockedUsers,
+    bool? isTyping,
+    String? typingInChatId,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -113,6 +132,9 @@ class UserModel {
       fcmToken: fcmToken ?? this.fcmToken,
       createdAt: createdAt ?? this.createdAt,
       searchKeywords: searchKeywords ?? this.searchKeywords,
+      blockedUsers: blockedUsers ?? this.blockedUsers,
+      isTyping: isTyping ?? this.isTyping,
+      typingInChatId: typingInChatId ?? this.typingInChatId,
     );
   }
 

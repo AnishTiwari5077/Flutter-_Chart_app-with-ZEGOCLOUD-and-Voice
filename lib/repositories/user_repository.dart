@@ -18,6 +18,79 @@ class UserRepository {
     });
   }
 
+  Future<void> updateTypingStatus({
+    required String userId,
+    required bool isTyping,
+    String? chatId,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'isTyping': isTyping,
+        'typingInChatId': isTyping ? chatId : null,
+      });
+    } catch (e) {
+      print('Error updating typing status: $e');
+    }
+  }
+
+  // ✅ NEW: Block user
+  Future<void> blockUser(String currentUserId, String userToBlockId) async {
+    try {
+      await _firestore.collection('users').doc(currentUserId).update({
+        'blockedUsers': FieldValue.arrayUnion([userToBlockId]),
+      });
+    } catch (e) {
+      throw Exception('Failed to block user: $e');
+    }
+  }
+
+  // ✅ NEW: Unblock user
+  Future<void> unblockUser(String currentUserId, String userToUnblockId) async {
+    try {
+      await _firestore.collection('users').doc(currentUserId).update({
+        'blockedUsers': FieldValue.arrayRemove([userToUnblockId]),
+      });
+    } catch (e) {
+      throw Exception('Failed to unblock user: $e');
+    }
+  }
+
+  // ✅ NEW: Check if user is blocked
+  Future<bool> isUserBlocked(String currentUserId, String otherUserId) async {
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .get();
+      final userData = userDoc.data();
+      if (userData == null) return false;
+
+      final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
+      return blockedUsers.contains(otherUserId);
+    } catch (e) {
+      print('Error checking block status: $e');
+      return false;
+    }
+  }
+
+  // ✅ NEW: Check if blocked by other user
+  Future<bool> isBlockedByUser(String currentUserId, String otherUserId) async {
+    try {
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(otherUserId)
+          .get();
+      final userData = userDoc.data();
+      if (userData == null) return false;
+
+      final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
+      return blockedUsers.contains(currentUserId);
+    } catch (e) {
+      print('Error checking if blocked by user: $e');
+      return false;
+    }
+  }
+
   Future<UserModel?> getUser(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
