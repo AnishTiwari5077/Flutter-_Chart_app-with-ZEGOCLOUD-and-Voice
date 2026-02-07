@@ -183,7 +183,7 @@ class _ChatListItem extends ConsumerWidget {
         );
       },
       loading: () => _buildLoadingTile(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
