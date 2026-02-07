@@ -61,8 +61,6 @@ class FriendRequestService {
     try {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not authenticated');
-
-      // Update request status
       await _firestore.collection('friendRequests').doc(requestId).update({
         'status': 'accepted',
       });

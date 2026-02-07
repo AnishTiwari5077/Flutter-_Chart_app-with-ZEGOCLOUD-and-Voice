@@ -21,7 +21,7 @@ import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import '../../models/user_model.dart';
 import '../widgets/voice_recorder_button.dart';
 import '../../models/message_model.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth_provider.dart' hide userRepositoryProvider;
 import '../../providers/user_provider.dart';
 import '../../repositories/storage_repository.dart';
 import '../../theme/app_theme.dart';
@@ -44,8 +44,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isSending = false;
-
-  // ✅ FIX: Store repository reference to avoid using ref in dispose
   late final _userRepository = ref.read(userRepositoryProvider);
   String? _currentUserId;
 
@@ -71,13 +69,10 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
   @override
   void dispose() {
-    // ✅ FIX: Use stored repository instead of ref
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _scrollController.dispose();
     _typingTimer?.cancel();
-
-    // ✅ FIX: Stop typing using stored values
     if (_isCurrentlyTyping && _currentUserId != null) {
       _userRepository.updateTypingStatus(
         userId: _currentUserId!,
@@ -785,8 +780,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // ✅ FIX: Check if user is blocked
     final isBlockedFuture = currentUser != null
         ? _userRepository.isUserBlocked(currentUser.uid, widget.friend.uid)
         : Future.value(false);
@@ -795,8 +788,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
       future: isBlockedFuture,
       builder: (context, blockSnapshot) {
         final isBlocked = blockSnapshot.data ?? false;
-
-        // ✅ FIX: Show blocked user UI
         if (isBlocked) {
           return Scaffold(
             backgroundColor: isDark
@@ -1001,7 +992,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                   ),
                 ],
               ),
-              error: (_, __) => Row(
+              error: (_, _) => Row(
                 children: [
                   UserAvatar(imageUrl: widget.friend.avatarUrl, radius: 20),
                   const SizedBox(width: 12),
@@ -1158,7 +1149,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                             return const SizedBox.shrink();
                           },
                           loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         ),
                       ],
                     );

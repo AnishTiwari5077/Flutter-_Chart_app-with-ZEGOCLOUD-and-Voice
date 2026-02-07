@@ -12,8 +12,6 @@ class UserModel {
   final String fcmToken;
   final DateTime createdAt;
   final List<String> searchKeywords;
-
-  // ✅ NEW: Block and typing features
   final List<String> blockedUsers;
   final bool isTyping;
   final String? typingInChatId;
@@ -32,8 +30,6 @@ class UserModel {
     this.isTyping = false,
     this.typingInChatId,
   });
-
-  /// Convert to Firestore Map
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -107,7 +103,6 @@ class UserModel {
     }
   }
 
-  /// Copy with method
   UserModel copyWith({
     String? uid,
     String? email,

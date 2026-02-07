@@ -29,11 +29,10 @@ class UserRepository {
         'typingInChatId': isTyping ? chatId : null,
       });
     } catch (e) {
-      print('Error updating typing status: $e');
+      //   print('Error updating typing status: $e');
     }
   }
 
-  // ✅ NEW: Block user
   Future<void> blockUser(String currentUserId, String userToBlockId) async {
     try {
       await _firestore.collection('users').doc(currentUserId).update({
@@ -44,7 +43,6 @@ class UserRepository {
     }
   }
 
-  // ✅ NEW: Unblock user
   Future<void> unblockUser(String currentUserId, String userToUnblockId) async {
     try {
       await _firestore.collection('users').doc(currentUserId).update({
@@ -55,7 +53,6 @@ class UserRepository {
     }
   }
 
-  // ✅ NEW: Check if user is blocked
   Future<bool> isUserBlocked(String currentUserId, String otherUserId) async {
     try {
       final userDoc = await _firestore
@@ -68,12 +65,11 @@ class UserRepository {
       final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
       return blockedUsers.contains(otherUserId);
     } catch (e) {
-      print('Error checking block status: $e');
+      //   print('Error checking block status: $e');
       return false;
     }
   }
 
-  // ✅ NEW: Check if blocked by other user
   Future<bool> isBlockedByUser(String currentUserId, String otherUserId) async {
     try {
       final userDoc = await _firestore
@@ -86,7 +82,7 @@ class UserRepository {
       final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
       return blockedUsers.contains(currentUserId);
     } catch (e) {
-      print('Error checking if blocked by user: $e');
+      //   print('Error checking if blocked by user: $e');
       return false;
     }
   }

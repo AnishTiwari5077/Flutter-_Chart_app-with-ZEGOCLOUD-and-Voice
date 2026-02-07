@@ -49,7 +49,6 @@ class FullScreenImageViewer extends StatelessWidget {
 
   Future<void> _shareImage(BuildContext context) async {
     try {
-      // ✅ FIXED: Use ShareParams with text parameter
       await SharePlus.instance.share(
         ShareParams(text: imageUrl, subject: 'Shared Image'),
       );

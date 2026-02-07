@@ -12,7 +12,6 @@ import '../models/message_model.dart';
 import '../models/user_model.dart';
 import 'auth_provider.dart';
 
-// ✅ OPTIMIZED: Let Firestore handle sorting
 final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
   final currentUser = ref.watch(currentUserProvider).value;
   if (currentUser == null) return Stream.value([]);
@@ -20,7 +19,7 @@ final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
   return FirebaseFirestore.instance
       .collection('chats')
       .where('participants', arrayContains: currentUser.uid)
-      .orderBy('lastMessageTime', descending: true) // ✅ Server-side sorting
+      .orderBy('lastMessageTime', descending: true)
       .snapshots()
       .map((snapshot) {
         return snapshot.docs
@@ -36,7 +35,6 @@ final chatListProvider = StreamProvider<List<ChatModel>>((ref) {
       });
 });
 
-// ✅ OPTIMIZED: Pagination support for messages
 class MessagesPagination {
   final String chatId;
   final int limit;
@@ -61,33 +59,49 @@ class MessagesPagination {
   int get hashCode => chatId.hashCode ^ limit.hashCode ^ lastDocument.hashCode;
 }
 
-// ✅ OPTIMIZED: Paginated messages provider
 final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
   ref,
   chatId,
-) {
-  return FirebaseFirestore.instance
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp', descending: true)
-      //  .limit(20) // ✅ Load only 20 messages initially
-      .snapshots()
-      .map((snapshot) {
-        return snapshot.docs
-            .map((doc) {
-              try {
-                return MessageModel.fromMap(doc.data());
-              } catch (e) {
-                return null;
-              }
-            })
-            .whereType<MessageModel>()
-            .toList();
-      });
-});
+) async* {
+  final currentUser = ref.watch(currentUserProvider).value;
+  if (currentUser == null) {
+    yield [];
+    return;
+  }
 
-// 🆕 Message service provider
+  final userRepository = ref.read(userRepositoryProvider);
+
+  await for (final snapshot
+      in FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .snapshots()) {
+    final messages = snapshot.docs
+        .map((doc) {
+          try {
+            return MessageModel.fromMap(doc.data());
+          } catch (e) {
+            return null;
+          }
+        })
+        .whereType<MessageModel>()
+        .toList();
+    final filteredMessages = <MessageModel>[];
+    for (final message in messages) {
+      final isBlocked = await userRepository.isUserBlocked(
+        currentUser.uid,
+        message.senderId,
+      );
+      if (!isBlocked) {
+        filteredMessages.add(message);
+      }
+    }
+
+    yield filteredMessages;
+  }
+});
 final messageServiceProvider = Provider<MessageService>((ref) {
   return MessageService();
 });
@@ -115,6 +129,25 @@ class ChatService {
     try {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not authenticated');
+      final userRepository = ref.read(userRepositoryProvider);
+      final isBlockedByReceiver = await userRepository.isUserBlocked(
+        receiverId,
+        currentUser.uid,
+      );
+
+      if (isBlockedByReceiver) {
+        throw Exception(
+          'Cannot send message. You have been blocked by this user.',
+        );
+      }
+      final hasBlockedReceiver = await userRepository.isUserBlocked(
+        currentUser.uid,
+        receiverId,
+      );
+
+      if (hasBlockedReceiver) {
+        throw Exception('Cannot send message to a blocked user.');
+      }
 
       final messageId = _uuid.v4();
       final message = MessageModel(
@@ -130,8 +163,6 @@ class ChatService {
         replyToContent: replyToContent,
         replyToSenderId: replyToSenderId,
       );
-
-      // ✅ Use batch writes for better performance
       final batch = _firestore.batch();
 
       final messageRef = _firestore
@@ -153,15 +184,12 @@ class ChatService {
       });
 
       await batch.commit();
-
-      // ✅ Send notification asynchronously (don't wait)
       _sendNotificationAsync(receiverId, currentUser, type, content, chatId);
     } catch (e) {
       rethrow;
     }
   }
 
-  // ✅ OPTIMIZED: Non-blocking notification
   Future<void> _sendNotificationAsync(
     String receiverId,
     UserModel currentUser,
@@ -204,11 +232,10 @@ class ChatService {
           .collection('messages')
           .where('receiverId', isEqualTo: currentUserId)
           .where('isRead', isEqualTo: false)
-          .limit(50) // ✅ Limit batch size
+          .limit(50)
           .get();
 
       if (messages.docs.isEmpty) {
-        // ✅ Still update unread count
         await _firestore.collection('chats').doc(chatId).update({
           'unreadCount.$currentUserId': 0,
         });
@@ -217,12 +244,10 @@ class ChatService {
 
       final batch = _firestore.batch();
 
-      // Update chat unread count
       batch.update(_firestore.collection('chats').doc(chatId), {
         'unreadCount.$currentUserId': 0,
       });
 
-      // Update messages
       for (var doc in messages.docs) {
         batch.update(doc.reference, {'isRead': true});
       }
@@ -239,7 +264,7 @@ class ChatService {
           .collection('chats')
           .doc(chatId)
           .collection('messages')
-          .limit(500) // ✅ Limit to avoid timeout
+          .limit(500)
           .get();
 
       final batch = _firestore.batch();
@@ -263,6 +288,27 @@ class ChatService {
     try {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) throw Exception('Not authenticated');
+      final userRepository = ref.read(userRepositoryProvider);
+
+      final isBlocked = await userRepository.isUserBlocked(
+        currentUser.uid,
+        otherUserId,
+      );
+
+      final isBlockedBy = await userRepository.isUserBlocked(
+        otherUserId,
+        currentUser.uid,
+      );
+
+      if (isBlocked) {
+        throw Exception('Cannot create chat with a blocked user.');
+      }
+
+      if (isBlockedBy) {
+        throw Exception(
+          'Cannot create chat. You have been blocked by this user.',
+        );
+      }
 
       final chatId = generateChatId(currentUser.uid, otherUserId);
 
