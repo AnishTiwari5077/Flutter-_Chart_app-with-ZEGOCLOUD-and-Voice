@@ -7,6 +7,7 @@ import 'package:new_chart/models/message_model.dart';
 import 'package:new_chart/screens/full_screen_viewer.dart';
 import 'package:new_chart/theme/app_theme.dart';
 import 'package:new_chart/widgets/message_reactions.dart';
+import 'package:new_chart/widgets/video_player_widget.dart';
 import 'package:new_chart/widgets/voice_message_bubble.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -105,7 +106,7 @@ class MessageBubble extends StatelessWidget {
                 ),
               ],
 
-              // ✅ UPDATED: Add tap to open full screen for images
+              // Image message with full screen viewer
               if (message.type == MessageType.image && message.mediaUrl != null)
                 GestureDetector(
                   onTap: () {
@@ -150,6 +151,17 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                 )
+              // Video message
+              else if (message.type == MessageType.video &&
+                  message.mediaUrl != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: VideoPlayerWidget(
+                    videoUrl: message.mediaUrl!,
+                    isDark: isDark,
+                  ),
+                )
+              // Voice message
               else if (message.type == MessageType.voice &&
                   message.mediaUrl != null)
                 VoiceMessageBubble(
@@ -167,6 +179,57 @@ class MessageBubble extends StatelessWidget {
                   theme: theme,
                   isDark: isDark,
                 )
+              // File message
+              else if (message.type == MessageType.file &&
+                  message.mediaUrl != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (isMe ? Colors.white : theme.colorScheme.primary)
+                            .withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.insert_drive_file_rounded,
+                        color: isMe ? Colors.white : theme.colorScheme.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            message.fileName ?? 'File',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isMe ? Colors.white : null,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tap to download',
+                            style: TextStyle(
+                              color: isMe
+                                  ? Colors.white.withValues(alpha: .7)
+                                  : (isDark
+                                        ? AppTheme.textSecondaryDark
+                                        : AppTheme.textSecondaryLight),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              // Text message (default)
               else
                 Text(
                   message.content,

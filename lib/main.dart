@@ -17,17 +17,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Run heavy initialization tasks in parallel
   await Future.wait([dotenv.load(fileName: ".env"), Firebase.initializeApp()]);
-
-  // Set background handler after Firebase is initialized
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Initialize notification service
   await NotificationService.initialize();
-
-  // Configure Zego calling UI
   ZegoUIKitPrebuiltCallInvitationService().useSystemCallingUI([
     ZegoUIKitSignalingPlugin(),
   ]);
@@ -48,7 +40,6 @@ class _MyAppState extends ConsumerState<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Defer Zego navigator setup to avoid blocking the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ZegoUIKitPrebuiltCallInvitationService().setNavigatorKey(navigatorKey);
     });

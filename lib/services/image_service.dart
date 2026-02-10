@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 class ImagePickerService {
   static final ImagePicker _picker = ImagePicker();
 
+  // Maximum video size: 50MB
+  static const int maxVideoSizeBytes = 50 * 1024 * 1024;
+
   static Future<File?> pickImageFromCamera() async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -48,15 +51,60 @@ class ImagePickerService {
     try {
       final XFile? video = await _picker.pickVideo(
         source: ImageSource.gallery,
-        maxDuration: const Duration(minutes: 5),
+        maxDuration: const Duration(minutes: 2), // Reduced from 5 to 2
       );
 
       if (video != null) {
-        return File(video.path);
+        final file = File(video.path);
+
+        // Check file size
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / (1024 * 1024);
+        debugPrint('Video file size: ${fileSizeMB.toStringAsFixed(2)} MB');
+
+        if (fileSize > maxVideoSizeBytes) {
+          throw Exception(
+            'Video is too large (${fileSizeMB.toStringAsFixed(1)} MB). '
+            'Maximum size is ${maxVideoSizeBytes ~/ (1024 * 1024)} MB',
+          );
+        }
+
+        return file;
       }
       return null;
     } catch (e) {
       debugPrint('Error picking video: $e');
+      rethrow;
+    }
+  }
+
+  static Future<File?> pickVideoFromCamera() async {
+    try {
+      final XFile? video = await _picker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(minutes: 2),
+      );
+
+      if (video != null) {
+        final file = File(video.path);
+
+        // Check file size
+        final fileSize = await file.length();
+        final fileSizeMB = fileSize / (1024 * 1024);
+        debugPrint('Video file size: ${fileSizeMB.toStringAsFixed(2)} MB');
+
+        if (fileSize > maxVideoSizeBytes) {
+          throw Exception(
+            'Video is too large (${fileSizeMB.toStringAsFixed(1)} MB). '
+            'Maximum size is ${maxVideoSizeBytes ~/ (1024 * 1024)} MB',
+          );
+        }
+
+        return file;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error picking video from camera: $e');
       rethrow;
     }
   }
@@ -170,7 +218,6 @@ class ImagePickerService {
                       finalImage = await cropImage(image, context);
                       debugPrint('After crop: ${finalImage?.path}');
                     }
-                    // Always callback with the final image
                     onImageSelected(finalImage);
                   } else {
                     onImageSelected(null);
@@ -213,7 +260,6 @@ class ImagePickerService {
                       finalImage = await cropImage(image, context);
                       debugPrint('After crop: ${finalImage?.path}');
                     }
-                    // Always callback with the final image
                     onImageSelected(finalImage);
                   } else {
                     onImageSelected(null);

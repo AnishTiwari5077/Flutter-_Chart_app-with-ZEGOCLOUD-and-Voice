@@ -30,9 +30,11 @@ class ConversationController {
     required this.chatId,
     required this.friend,
   });
+
   UserRepository get _userRepository => ref.read(userRepositoryProvider);
   ChatService get _chatService => ref.read(chatServiceProvider);
   MessageService get _messageService => ref.read(messageServiceProvider);
+
   Future<void> markMessagesAsRead() async {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser != null) {
@@ -172,26 +174,96 @@ class ConversationController {
 
   // Pick image from gallery
   Future<File?> pickImageFromGallery() async {
-    return await ImagePickerService.pickImageFromGallery();
+    try {
+      return await ImagePickerService.pickImageFromGallery();
+    } catch (e) {
+      if (context.mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          'Failed to select image: ${ErrorHandler.getErrorMessage(e)}',
+        );
+      }
+      return null;
+    }
   }
 
   // Pick video from gallery
   Future<File?> pickVideoFromGallery() async {
-    return await ImagePickerService.pickVideoFromGallery();
+    try {
+      debugPrint('Starting video picker...');
+      final video = await ImagePickerService.pickVideoFromGallery();
+
+      if (video != null) {
+        final fileSize = await video.length();
+        debugPrint('Video picked successfully: ${video.path}');
+        debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
+      } else {
+        debugPrint('No video selected');
+      }
+
+      return video;
+    } catch (e) {
+      debugPrint('Error in pickVideoFromGallery: $e');
+      if (context.mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+      return null;
+    }
+  }
+
+  // Pick video from camera
+  Future<File?> pickVideoFromCamera() async {
+    try {
+      debugPrint('Starting video camera...');
+      final video = await ImagePickerService.pickVideoFromCamera();
+
+      if (video != null) {
+        final fileSize = await video.length();
+        debugPrint('Video recorded successfully: ${video.path}');
+        debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
+      } else {
+        debugPrint('No video recorded');
+      }
+
+      return video;
+    } catch (e) {
+      debugPrint('Error in pickVideoFromCamera: $e');
+      if (context.mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          ErrorHandler.getErrorMessage(e),
+        );
+      }
+      return null;
+    }
   }
 
   // Pick document
   Future<File?> pickDocument() async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
-      return File(result.files.single.path!);
+    try {
+      final result = await FilePicker.platform.pickFiles();
+      if (result != null && result.files.single.path != null) {
+        return File(result.files.single.path!);
+      }
+      return null;
+    } catch (e) {
+      if (context.mounted) {
+        ErrorHandler.showErrorSnackBar(
+          context,
+          'Failed to select document: ${ErrorHandler.getErrorMessage(e)}',
+        );
+      }
+      return null;
     }
-    return null;
   }
 
   // Send voice message
   Future<void> sendVoiceMessage(String audioPath, Duration duration) async {
     try {
+      debugPrint('Uploading voice message...');
       final storageRepo = StorageRepository(
         cloudName: EnvConfig.cloudinaryCloudName,
         uploadPreset: EnvConfig.cloudinaryUploadPreset,
@@ -203,6 +275,8 @@ class ConversationController {
         file: file,
         fileType: 'voice',
       );
+
+      debugPrint('Voice uploaded: $audioUrl');
 
       await _chatService.sendMessage(
         chatId: chatId,
@@ -221,6 +295,7 @@ class ConversationController {
         ErrorHandler.showSuccessSnackBar(context, 'Voice message sent');
       }
     } catch (e) {
+      debugPrint('Error sending voice message: $e');
       if (context.mounted) {
         ErrorHandler.showErrorSnackBar(
           context,
@@ -234,16 +309,26 @@ class ConversationController {
   // Send media message
   Future<void> sendMediaMessage(MessageType type, File file) async {
     try {
+      debugPrint('Starting to send ${type.name} message...');
+      debugPrint('File path: ${file.path}');
+      debugPrint('File exists: ${await file.exists()}');
+
+      final fileSize = await file.length();
+      debugPrint('File size: ${fileSize / (1024 * 1024)} MB');
+
       final storageRepo = StorageRepository(
         cloudName: EnvConfig.cloudinaryCloudName,
         uploadPreset: EnvConfig.cloudinaryUploadPreset,
       );
 
+      debugPrint('Uploading ${type.name} to Cloudinary...');
       final mediaUrl = await storageRepo.uploadChatMedia(
         chatId: chatId,
         file: file,
         fileType: type.toString().split('.').last,
       );
+
+      debugPrint('${type.name} uploaded successfully: $mediaUrl');
 
       await _chatService.sendMessage(
         chatId: chatId,
@@ -258,14 +343,21 @@ class ConversationController {
         fileName: file.path.split('/').last,
       );
 
+      debugPrint('${type.name} message sent successfully');
+
       if (context.mounted) {
-        ErrorHandler.showSuccessSnackBar(context, 'Sent successfully');
+        ErrorHandler.showSuccessSnackBar(
+          context,
+          '${type.name.capitalize()} sent successfully',
+        );
       }
     } catch (e) {
+      debugPrint('Error sending ${type.name} message: $e');
+      debugPrint('Error stack trace: ${StackTrace.current}');
       if (context.mounted) {
         ErrorHandler.showErrorSnackBar(
           context,
-          ErrorHandler.getErrorMessage(e),
+          'Failed to send ${type.name}: ${ErrorHandler.getErrorMessage(e)}',
         );
       }
       rethrow;
@@ -418,5 +510,13 @@ class ConversationController {
         );
       }
     }
+  }
+}
+
+// Extension helper for string capitalization
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1)}';
   }
 }

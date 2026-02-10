@@ -237,6 +237,13 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     try {
       await _controller.sendVoiceMessage(audioPath, duration);
+    } catch (e) {
+      debugPrint('Error sending voice message: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send voice message: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -246,7 +253,26 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     setState(() => _isSending = true);
 
     try {
+      debugPrint('Sending ${type.name} message from conversation screen');
       await _controller.sendMediaMessage(type, file);
+      debugPrint(
+        '${type.name} message sent successfully from conversation screen',
+      );
+    } catch (e) {
+      debugPrint('Error in _sendMediaMessage: $e');
+      if (mounted) {
+        // Error already handled in controller, but show user-friendly message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().contains('too large')
+                  ? 'File is too large. Maximum size is 50 MB'
+                  : 'Failed to send ${type.name}',
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
@@ -261,7 +287,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true, // Add this
+      isScrollControlled: true,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
@@ -281,9 +307,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                 ),
               ),
               Flexible(
-                // Change this from Padding to Flexible
                 child: SingleChildScrollView(
-                  // Add scrolling
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                     child: Column(
@@ -302,9 +326,25 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                           color: Colors.purple,
                           onTap: () async {
                             Navigator.pop(context);
-                            final image = await _controller.capturePhoto();
-                            if (image != null) {
-                              await _sendMediaMessage(MessageType.image, image);
+                            try {
+                              final image = await _controller.capturePhoto();
+                              if (image != null) {
+                                await _sendMediaMessage(
+                                  MessageType.image,
+                                  image,
+                                );
+                              }
+                            } catch (e) {
+                              debugPrint('Camera error: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to capture photo: $e',
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           },
                           theme: theme,
@@ -317,10 +357,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                           color: Colors.blue,
                           onTap: () async {
                             Navigator.pop(context);
-                            final image = await _controller
-                                .pickImageFromGallery();
-                            if (image != null) {
-                              await _sendMediaMessage(MessageType.image, image);
+                            try {
+                              final image = await _controller
+                                  .pickImageFromGallery();
+                              if (image != null) {
+                                await _sendMediaMessage(
+                                  MessageType.image,
+                                  image,
+                                );
+                              }
+                            } catch (e) {
+                              debugPrint('Photo picker error: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to select photo: $e'),
+                                  ),
+                                );
+                              }
                             }
                           },
                           theme: theme,
@@ -333,10 +387,34 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                           color: Colors.red,
                           onTap: () async {
                             Navigator.pop(context);
-                            final video = await _controller
-                                .pickVideoFromGallery();
-                            if (video != null) {
-                              await _sendMediaMessage(MessageType.video, video);
+                            try {
+                              debugPrint('Opening video picker...');
+                              final video = await _controller
+                                  .pickVideoFromGallery();
+
+                              if (video != null) {
+                                debugPrint('Video selected, sending...');
+                                await _sendMediaMessage(
+                                  MessageType.video,
+                                  video,
+                                );
+                              } else {
+                                debugPrint('No video selected');
+                              }
+                            } catch (e) {
+                              debugPrint('Video error in UI: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      e.toString().contains('too large')
+                                          ? 'Video is too large. Maximum size is 50 MB'
+                                          : 'Failed to send video: $e',
+                                    ),
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
                             }
                           },
                           theme: theme,
@@ -349,9 +427,22 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                           color: Colors.orange,
                           onTap: () async {
                             Navigator.pop(context);
-                            final file = await _controller.pickDocument();
-                            if (file != null) {
-                              await _sendMediaMessage(MessageType.file, file);
+                            try {
+                              final file = await _controller.pickDocument();
+                              if (file != null) {
+                                await _sendMediaMessage(MessageType.file, file);
+                              }
+                            } catch (e) {
+                              debugPrint('Document picker error: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to select document: $e',
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           },
                           theme: theme,
@@ -586,7 +677,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                             return const SizedBox.shrink();
                           },
                           loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
                         ),
                       ],
                     );
@@ -760,7 +851,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                       ),
                     ],
                   ),
-                  error: (_, _) => Row(
+                  error: (_, __) => Row(
                     children: [
                       UserAvatar(imageUrl: widget.friend.avatarUrl, radius: 20),
                       const SizedBox(width: 12),
