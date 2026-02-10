@@ -32,6 +32,20 @@ class UserRepository {
     }
   }
 
+  Future<void> updateUserStatus({
+    required String userId,
+    required bool isOnline,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'isOnline': isOnline,
+        'lastSeen': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (e) {
+      throw Exception('Failed to update status: $e');
+    }
+  }
+
   Future<void> blockUser(String currentUserId, String userToBlockId) async {
     try {
       await _firestore.collection('users').doc(currentUserId).update({
