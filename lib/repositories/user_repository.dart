@@ -25,7 +25,7 @@ class UserRepository {
     try {
       await _firestore.collection('users').doc(userId).update({
         'isTyping': isTyping,
-        'typingInChatId': isTyping ? chatId : null,
+        'typingInChatId': chatId,
       });
     } catch (e) {
       // Handle error silently
