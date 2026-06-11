@@ -11,20 +11,24 @@ import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'services/notification_services.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Future.wait([dotenv.load(fileName: ".env"), Firebase.initializeApp()]);
   debugPrint("📬 Background message: ${message.messageId}");
   
-  if (message.data['type'] == 'call') {
-    await NotificationService.initialize();
-    await NotificationService.showCallNotification(message);
-  } else {
-    // Show local notification for regular messages
-    await NotificationService.initialize();
-    await NotificationService.showLocalNotification(message);
+  // Ignore ZegoCloud offline push messages as they are handled automatically by Zego
+  if (message.data.containsKey('zego') || 
+      message.data['resourceID'] == 'zego_call' || 
+      message.data.containsKey('callID')) {
+    debugPrint("📬 Ignoring Zego message in custom background handler.");
+    return;
   }
+
+  // Show local notification for regular messages
+  await NotificationService.initialize();
+  await NotificationService.showLocalNotification(message);
 }
 
 void main() async {
@@ -57,6 +61,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    // ⭐ Request permission to show Call UI over other apps (Fixes background vibrate-only issue)
+    _requestCallPermissions();
+
     // ⭐ Add lifecycle observer for background handling
     WidgetsBinding.instance.addObserver(this);
 
@@ -73,6 +80,13 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _requestCallPermissions() async {
+    // Request "Display over other apps" (System Alert Window) permission
+    if (await Permission.systemAlertWindow.isDenied) {
+      await Permission.systemAlertWindow.request();
+    }
   }
 
   // ⭐ Handle app lifecycle changes

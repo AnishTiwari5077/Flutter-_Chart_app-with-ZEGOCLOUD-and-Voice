@@ -24,6 +24,16 @@ class ZegoService {
       userID: userId,
       userName: userName,
       plugins: [ZegoUIKitSignalingPlugin()],
+      notificationConfig: ZegoCallInvitationNotificationConfig(
+        androidNotificationConfig: ZegoCallAndroidNotificationConfig(
+          callChannel: ZegoCallAndroidNotificationChannelConfig(
+            channelID: "ZegoUIKit",
+            channelName: "Call Notifications",
+            sound: "ringtone",
+            icon: "notification_icon",
+          ),
+        ),
+      ),
       requireConfig: (ZegoCallInvitationData data) {
         final bool isGroup = data.invitees.length > 1;
         final bool isVideo = data.type == ZegoCallInvitationType.videoCall;
