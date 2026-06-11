@@ -135,14 +135,19 @@ class NotificationService {
     if (message.data['type'] == 'call') {
       await showCallNotification(message);
     } else {
-      await _showLocalNotification(message);
+      await showLocalNotification(message);
     }
   }
 
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
+  static Future<void> showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
+    final data = message.data;
 
-    if (notification != null && !kIsWeb) {
+    // Use notification object if available, otherwise fallback to data payload
+    final title = notification?.title ?? data['title'] ?? data['senderName'] ?? 'New Message';
+    final body = notification?.body ?? data['body'] ?? data['message'] ?? '';
+
+    if (!kIsWeb) {
       final androidDetails = AndroidNotificationDetails(
         _channel.id,
         _channel.name,
@@ -153,8 +158,8 @@ class NotificationService {
         playSound: true,
         enableVibration: true,
         styleInformation: BigTextStyleInformation(
-          notification.body ?? '',
-          contentTitle: notification.title,
+          body,
+          contentTitle: title,
         ),
       );
 
@@ -170,9 +175,9 @@ class NotificationService {
       );
 
       await _localNotifications.show(
-        id: notification.hashCode,
-        title: notification.title ?? 'New Message',
-        body: notification.body ?? '',
+        id: message.hashCode,
+        title: title,
+        body: body,
         notificationDetails: details,
         payload: jsonEncode(message.data),
       );
