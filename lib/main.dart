@@ -11,7 +11,7 @@ import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'services/notification_services.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:permission_handler/permission_handler.dart';
+
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -61,9 +61,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
-    // ⭐ Request permission to show Call UI over other apps (Fixes background vibrate-only issue)
-    _requestCallPermissions();
-
     // ⭐ Add lifecycle observer for background handling
     WidgetsBinding.instance.addObserver(this);
 
@@ -80,17 +77,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  Future<void> _requestCallPermissions() async {
-    // Request Notification permission (Crucial for Android 13+ Offline Push)
-    if (await Permission.notification.isDenied) {
-      await Permission.notification.request();
-    }
-    // Request "Display over other apps" (System Alert Window) permission
-    if (await Permission.systemAlertWindow.isDenied) {
-      await Permission.systemAlertWindow.request();
-    }
   }
 
   // ⭐ Handle app lifecycle changes

@@ -345,7 +345,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                               }
                             } catch (e) {
                               debugPrint('Camera error: $e');
-                              if (mounted) {
+                              if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -377,7 +377,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                               }
                             } catch (e) {
                               debugPrint('Photo picker error: $e');
-                              if (mounted) {
+                              if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Failed to select photo: $e'),
@@ -412,7 +412,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                               }
                             } catch (e) {
                               debugPrint('Video error in UI: $e');
-                              if (mounted) {
+                              if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -443,7 +443,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
                               }
                             } catch (e) {
                               debugPrint('Document picker error: $e');
-                              if (mounted) {
+                              if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
@@ -528,7 +528,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     final currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) return;
 
-    final isBlocked = await _controller.isUserBlocked(currentUser.uid);
+    final isBlocked = _controller.isUserBlocked(currentUser.uid);
 
     if (!mounted) return;
 
@@ -604,29 +604,24 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
 
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isBlockedFuture = currentUser != null
+    final isBlocked = currentUser != null
         ? _controller.isUserBlocked(currentUser.uid)
-        : Future.value(false);
+        : false;
 
-    return FutureBuilder<bool>(
-      future: isBlockedFuture,
-      builder: (context, blockSnapshot) {
-        final isBlocked = blockSnapshot.data ?? false;
+    if (isBlocked) {
+      return Scaffold(
+        backgroundColor: isDark
+            ? AppTheme.backgroundDark
+            : AppTheme.backgroundLight,
+        appBar: _buildAppBar(theme, isDark, isBlocked: true),
+        body: BlockedUserView(
+          username: widget.friend.username,
+          onUnblock: () => _toggleBlockUser(currentUser.uid, true),
+        ),
+      );
+    }
 
-        if (isBlocked) {
-          return Scaffold(
-            backgroundColor: isDark
-                ? AppTheme.backgroundDark
-                : AppTheme.backgroundLight,
-            appBar: _buildAppBar(theme, isDark, isBlocked: true),
-            body: BlockedUserView(
-              username: widget.friend.username,
-              onUnblock: () => _toggleBlockUser(currentUser!.uid, true),
-            ),
-          );
-        }
-
-        return Scaffold(
+    return Scaffold(
           backgroundColor: isDark
               ? AppTheme.backgroundDark
               : AppTheme.backgroundLight,
@@ -751,8 +746,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
             ],
           ),
         );
-      },
-    );
   }
 
   PreferredSizeWidget _buildAppBar(

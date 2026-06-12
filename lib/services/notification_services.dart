@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -10,7 +10,6 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static late AndroidNotificationChannel _channel;
   static bool _isInitialized = false;
@@ -222,34 +221,6 @@ class NotificationService {
     // Token will be updated when user logs in through auth_repository
   }
 
-  static Future<String?> getToken() async {
-    try {
-      final token = await _messaging.getToken();
-      if (token != null) {
-        debugPrint('📱 FCM Token: ${token.substring(0, 20)}...');
-      }
-      return token;
-    } catch (e) {
-      debugPrint('❌ Error getting FCM token: $e');
-      return null;
-    }
-  }
-
-  static Future<void> updateTokenInFirestore(
-    String userId,
-    String token,
-  ) async {
-    try {
-      await _firestore.collection('users').doc(userId).update({
-        'fcmToken': token,
-        'lastTokenUpdate': FieldValue.serverTimestamp(),
-      });
-      debugPrint('✅ Token updated in Firestore for user: $userId');
-    } catch (e) {
-      debugPrint('❌ Error updating token in Firestore: $e');
-    }
-  }
-
   static Future<bool> sendMessageNotification({
     required String receiverToken,
     required String senderName,
@@ -351,57 +322,6 @@ class NotificationService {
     } catch (e) {
       debugPrint('❌ Error sending notification: $e');
       return false;
-    }
-  }
-
-  static Future<Map<String, int>> sendBatchNotifications({
-    required List<Map<String, dynamic>> notifications,
-  }) async {
-    try {
-      if (_backendUrl.isEmpty) {
-        return {'successCount': 0, 'failureCount': notifications.length};
-      }
-
-      final headers = <String, String>{'Content-Type': 'application/json'};
-
-      if (_apiKey != null && _apiKey!.isNotEmpty) {
-        headers['x-api-key'] = _apiKey!;
-      }
-
-      final payload = {'notifications': notifications};
-
-      final response = await http
-          .post(
-            Uri.parse('$_backendUrl/send-notifications-batch'),
-            headers: headers,
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        return {
-          'successCount': result['successCount'],
-          'failureCount': result['failureCount'],
-        };
-      } else {
-        return {'successCount': 0, 'failureCount': notifications.length};
-      }
-    } catch (e) {
-      debugPrint('❌ Batch notification error: $e');
-      return {'successCount': 0, 'failureCount': notifications.length};
-    }
-  }
-
-  static Future<void> deleteToken() async {
-    try {
-      await _messaging.deleteToken();
-      debugPrint('✅ FCM token deleted');
-    } catch (e) {
-      debugPrint('❌ Error deleting token: $e');
-      if (kDebugMode) {
-        rethrow;
-      }
     }
   }
 

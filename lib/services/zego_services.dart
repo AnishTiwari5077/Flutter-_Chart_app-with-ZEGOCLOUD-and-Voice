@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 import 'package:zego_zpns/zego_zpns.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../core/env_config.dart';
 
 class ZegoService {
@@ -19,6 +20,14 @@ class ZegoService {
     }
 
     if (_isInitialized) return;
+
+    // Request permissions BEFORE initializing Zego
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+    if (await Permission.systemAlertWindow.isDenied) {
+      await Permission.systemAlertWindow.request();
+    }
 
     // Step 1: Configure ZPNs to use FCM as the push channel
     ZPNsConfig zpnsConfig = ZPNsConfig();

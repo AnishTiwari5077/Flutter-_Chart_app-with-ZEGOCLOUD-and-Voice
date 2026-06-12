@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:new_chart/core/app_string.dart';
-import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/core/validator.dart';
 import 'package:new_chart/services/image_service.dart';
@@ -11,9 +10,9 @@ import 'package:new_chart/widgets/custom_button.dart';
 import 'package:new_chart/widgets/custom_text_field.dart';
 import 'package:new_chart/widgets/loading_overlay.dart';
 
+import '../../core/cloudinary_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
-import '../../repositories/storage_repository.dart';
 
 // Constants
 class SignUpConstants {
@@ -23,15 +22,6 @@ class SignUpConstants {
   static const double largeSpacing = 32.0;
 }
 
-// ✅ OPTIMIZED: Use autoDispose to prevent memory leaks
-final storageRepositoryProvider = Provider.autoDispose<StorageRepository>((
-  ref,
-) {
-  return StorageRepository(
-    cloudName: EnvConfig.cloudinaryCloudName,
-    uploadPreset: EnvConfig.cloudinaryUploadPreset,
-  );
-});
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});

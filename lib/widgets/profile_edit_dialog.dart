@@ -6,10 +6,10 @@ import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/core/validator.dart';
 import 'package:new_chart/models/user_model.dart';
 import 'package:new_chart/providers/auth_provider.dart';
-import 'package:new_chart/screens/profile_screen.dart';
 import 'package:new_chart/services/image_service.dart';
 import 'package:new_chart/theme/app_theme.dart';
 import 'package:new_chart/widgets/loading_overlay.dart';
+import 'package:new_chart/core/cloudinary_config.dart';
 
 class EditProfileDialog extends ConsumerStatefulWidget {
   final UserModel user;
