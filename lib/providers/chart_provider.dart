@@ -83,7 +83,8 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
     return;
   }
 
-  final userRepository = ref.read(userRepositoryProvider);
+  // Read blocked list once — filter locally with zero extra Firestore reads
+  final blockedIds = Set<String>.from(currentUser.blockedUsers);
 
   try {
     await for (final snapshot
@@ -93,14 +94,13 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
             .collection('messages')
             .orderBy('timestamp', descending: true)
             .snapshots()) {
-      // Check if user is still authenticated
       final stillAuthenticated = ref.read(currentUserProvider).value;
       if (stillAuthenticated == null) {
         yield [];
         return;
       }
 
-      final messages = snapshot.docs
+      yield snapshot.docs
           .map((doc) {
             try {
               return MessageModel.fromMap(doc.data());
@@ -109,23 +109,10 @@ final messagesProvider = StreamProvider.family<List<MessageModel>, String>((
             }
           })
           .whereType<MessageModel>()
+          .where((m) => !blockedIds.contains(m.senderId))
           .toList();
-
-      final filteredMessages = <MessageModel>[];
-      for (final message in messages) {
-        final isBlocked = await userRepository.isUserBlocked(
-          currentUser.uid,
-          message.senderId,
-        );
-        if (!isBlocked) {
-          filteredMessages.add(message);
-        }
-      }
-
-      yield filteredMessages;
     }
   } catch (e) {
-    // Handle permission errors gracefully
     yield [];
   }
 });
@@ -170,10 +157,7 @@ class ChatService {
         );
       }
 
-      final hasBlockedReceiver = await userRepository.isUserBlocked(
-        currentUser.uid,
-        receiverId,
-      );
+      final hasBlockedReceiver = currentUser.blockedUsers.contains(receiverId);
 
       if (hasBlockedReceiver) {
         throw Exception('Cannot send message to a blocked user.');
@@ -288,10 +272,7 @@ class ChatService {
 
       final userRepository = ref.read(userRepositoryProvider);
 
-      final isBlocked = await userRepository.isUserBlocked(
-        currentUser.uid,
-        otherUserId,
-      );
+      final isBlocked = currentUser.blockedUsers.contains(otherUserId);
 
       final isBlockedBy = await userRepository.isUserBlocked(
         otherUserId,

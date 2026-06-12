@@ -79,9 +79,6 @@ class VoiceRecorderService {
     }
   }
 
-  Future<Duration?> getRecordingDuration(String path) async {
-    return null;
-  }
 
   /// Dispose
   void dispose() {

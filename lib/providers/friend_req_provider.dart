@@ -126,22 +126,25 @@ class FriendRequestService {
       }
       await batch.commit();
 
-      final friendRequestsSnapshot = await _firestore
+      final requestBatch = _firestore.batch();
+      
+      // Fetch only requests where currentUser or friend is the sender
+      // This prevents a global table scan of all accepted requests
+      final query1 = await _firestore
           .collection('friendRequests')
-          .where('status', isEqualTo: 'accepted')
+          .where('senderId', isEqualTo: currentUser.uid)
+          .get();
+          
+      final query2 = await _firestore
+          .collection('friendRequests')
+          .where('senderId', isEqualTo: friendId)
           .get();
 
-      final requestsToDelete = friendRequestsSnapshot.docs.where((doc) {
-        final data = doc.data();
-        return (data['senderId'] == currentUser.uid &&
-                data['receiverId'] == friendId) ||
-            (data['senderId'] == friendId &&
-                data['receiverId'] == currentUser.uid);
-      });
-
-      final requestBatch = _firestore.batch();
-      for (var doc in requestsToDelete) {
-        requestBatch.delete(doc.reference);
+      for (var doc in query1.docs) {
+        if (doc.data()['receiverId'] == friendId) requestBatch.delete(doc.reference);
+      }
+      for (var doc in query2.docs) {
+        if (doc.data()['receiverId'] == currentUser.uid) requestBatch.delete(doc.reference);
       }
       await requestBatch.commit();
 

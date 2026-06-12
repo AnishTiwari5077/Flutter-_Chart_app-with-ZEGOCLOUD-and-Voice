@@ -2,13 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:new_chart/core/env_config.dart';
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/widgets/loading_overlay.dart';
 import 'package:new_chart/widgets/profile_edit_dialog.dart';
 import 'package:new_chart/widgets/user_avatar.dart';
 import '../../providers/auth_provider.dart';
-import '../../repositories/storage_repository.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileConstants {
@@ -21,12 +19,6 @@ class ProfileConstants {
   static const double sectionSpacing = 32.0;
 }
 
-final storageRepositoryProvider = Provider<StorageRepository>((ref) {
-  return StorageRepository(
-    cloudName: EnvConfig.cloudinaryCloudName,
-    uploadPreset: EnvConfig.cloudinaryUploadPreset,
-  );
-});
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});

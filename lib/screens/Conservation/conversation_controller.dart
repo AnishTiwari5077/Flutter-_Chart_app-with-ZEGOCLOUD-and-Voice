@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:new_chart/core/env_config.dart';
+
 import 'package:new_chart/core/error_handler.dart';
 import 'package:new_chart/providers/chart_provider.dart';
 import 'package:new_chart/repositories/user_repository.dart';
@@ -19,6 +20,7 @@ import '../../models/user_model.dart';
 import '../../models/message_model.dart';
 import '../../providers/auth_provider.dart';
 
+import '../../core/cloudinary_config.dart';
 import '../../repositories/storage_repository.dart';
 
 class ConversationController {
@@ -37,6 +39,7 @@ class ConversationController {
   UserRepository get _userRepository => ref.read(userRepositoryProvider);
   ChatService get _chatService => ref.read(chatServiceProvider);
   MessageService get _messageService => ref.read(messageServiceProvider);
+  StorageRepository get _storageRepo => ref.read(storageRepositoryProvider);
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> markMessagesAsRead() async {
@@ -282,20 +285,16 @@ class ConversationController {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) return;
 
-      debugPrint('Uploading voice message...');
-      final storageRepo = StorageRepository(
-        cloudName: EnvConfig.cloudinaryCloudName,
-        uploadPreset: EnvConfig.cloudinaryUploadPreset,
-      );
+      if (kDebugMode) debugPrint('Uploading voice message...');
 
       final file = File(audioPath);
-      final audioUrl = await storageRepo.uploadChatMedia(
+      final audioUrl = await _storageRepo.uploadChatMedia(
         chatId: chatId,
         file: file,
         fileType: 'voice',
       );
 
-      debugPrint('Voice uploaded: $audioUrl');
+      if (kDebugMode) debugPrint('Voice uploaded: $audioUrl');
 
       await _chatService.sendMessage(
         chatId: chatId,
@@ -339,26 +338,22 @@ class ConversationController {
       final currentUser = ref.read(currentUserProvider).value;
       if (currentUser == null) return;
 
-      debugPrint('Starting to send ${type.name} message...');
-      debugPrint('File path: ${file.path}');
-      debugPrint('File exists: ${await file.exists()}');
+      if (kDebugMode) {
+        debugPrint('Starting to send ${type.name} message...');
+        debugPrint('File path: ${file.path}');
+        debugPrint('File exists: ${await file.exists()}');
+        final fileSize = await file.length();
+        debugPrint('File size: ${fileSize / (1024 * 1024)} MB');
+      }
 
-      final fileSize = await file.length();
-      debugPrint('File size: ${fileSize / (1024 * 1024)} MB');
-
-      final storageRepo = StorageRepository(
-        cloudName: EnvConfig.cloudinaryCloudName,
-        uploadPreset: EnvConfig.cloudinaryUploadPreset,
-      );
-
-      debugPrint('Uploading ${type.name} to Cloudinary...');
-      final mediaUrl = await storageRepo.uploadChatMedia(
+      if (kDebugMode) debugPrint('Uploading ${type.name} to Cloudinary...');
+      final mediaUrl = await _storageRepo.uploadChatMedia(
         chatId: chatId,
         file: file,
         fileType: type.toString().split('.').last,
       );
 
-      debugPrint('${type.name} uploaded successfully: $mediaUrl');
+      if (kDebugMode) debugPrint('${type.name} uploaded successfully: $mediaUrl');
 
       final content = type == MessageType.image
           ? 'Image'
@@ -451,8 +446,7 @@ class ConversationController {
       final isReceiverTyping = receiverData['isTyping'] == true;
       final receiverChatId = receiverData['typingInChatId'] as String?;
 
-      final isReceiverInThisChat =
-          isReceiverOnline && receiverChatId == chatId;
+      final isReceiverInThisChat = isReceiverOnline && receiverChatId == chatId;
 
       // Only send notification if receiver is not currently in this chat
       if (!isReceiverInThisChat) {
@@ -511,8 +505,9 @@ class ConversationController {
   }
 
   // Check if user is blocked
-  Future<bool> isUserBlocked(String currentUserId) async {
-    return await _userRepository.isUserBlocked(currentUserId, friend.uid);
+  bool isUserBlocked(String currentUserId) {
+    final currentUser = ref.read(currentUserProvider).value;
+    return currentUser?.blockedUsers.contains(friend.uid) ?? false;
   }
 
   // Block user

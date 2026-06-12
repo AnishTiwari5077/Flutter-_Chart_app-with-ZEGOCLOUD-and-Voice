@@ -19,30 +19,19 @@ final allUsersProvider = StreamProvider<List<UserModel>>((ref) async* {
   }
 
   final userRepository = ref.read(userRepositoryProvider);
+  final blockedIds = Set<String>.from(currentUser.blockedUsers);
 
   try {
     await for (final users in userRepository.getAllUsers(currentUser.uid)) {
-      // Check if user is still authenticated
       final stillAuthenticated = ref.read(currentUserProvider).value;
       if (stillAuthenticated == null) {
         yield [];
         return;
       }
-
-      final filteredUsers = <UserModel>[];
-      for (final user in users) {
-        final isBlocked = await userRepository.isUserBlocked(
-          currentUser.uid,
-          user.uid,
-        );
-        if (!isBlocked) {
-          filteredUsers.add(user);
-        }
-      }
-      yield filteredUsers;
+      // Filter locally — zero extra Firestore reads
+      yield users.where((u) => !blockedIds.contains(u.uid)).toList();
     }
   } catch (e) {
-    // Handle permission errors gracefully
     yield [];
   }
 });
@@ -59,38 +48,23 @@ final filteredUsersProvider = StreamProvider<List<UserModel>>((ref) async* {
   }
 
   final userRepository = ref.read(userRepositoryProvider);
+  final blockedIds = Set<String>.from(currentUser.blockedUsers);
 
   try {
-    Stream<List<UserModel>> userStream;
-    if (query.isEmpty) {
-      userStream = userRepository.getAllUsers(currentUser.uid);
-    } else {
-      userStream = userRepository.searchUsers(query, currentUser.uid);
-    }
+    final Stream<List<UserModel>> userStream = query.isEmpty
+        ? userRepository.getAllUsers(currentUser.uid)
+        : userRepository.searchUsers(query, currentUser.uid);
 
     await for (final users in userStream) {
-      // Check if user is still authenticated
       final stillAuthenticated = ref.read(currentUserProvider).value;
       if (stillAuthenticated == null) {
         yield [];
         return;
       }
-
-      // Filter out blocked users
-      final filteredUsers = <UserModel>[];
-      for (final user in users) {
-        final isBlocked = await userRepository.isUserBlocked(
-          currentUser.uid,
-          user.uid,
-        );
-        if (!isBlocked) {
-          filteredUsers.add(user);
-        }
-      }
-      yield filteredUsers;
+      // Filter locally — zero extra Firestore reads
+      yield users.where((u) => !blockedIds.contains(u.uid)).toList();
     }
   } catch (e) {
-    // Handle permission errors gracefully
     yield [];
   }
 });
