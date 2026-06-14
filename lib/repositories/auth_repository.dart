@@ -106,6 +106,14 @@ class AuthRepository {
     }
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> updateOnlineStatus(bool isOnline) async {
     try {
       if (currentUser != null) {
