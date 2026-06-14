@@ -83,6 +83,207 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     }
   }
 
+  Future<void> _forgotPassword() async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Pre-fill with whatever the user already typed in the email field
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final sheetFormKey = GlobalKey<FormState>();
+    bool isSending = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.cardDark : AppTheme.cardLight,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                child: Form(
+                  key: sheetFormKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Handle bar
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppTheme.borderDark
+                                : AppTheme.borderLight,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Icon + title
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.12,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.lock_reset_rounded,
+                              color: theme.colorScheme.primary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Reset Password',
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'We will send a reset link to your email',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? AppTheme.textSecondaryDark
+                                        : AppTheme.textSecondaryLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // Email field
+                      CustomTextField(
+                        controller: resetEmailController,
+                        label: 'Email Address',
+                        prefixIcon: Icons.email_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.done,
+                        enabled: !isSending,
+                        validator: Validators.validateEmail,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Send button
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              theme.colorScheme.primary,
+                              theme.colorScheme.primary.withValues(alpha: 0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.3,
+                              ),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: isSending
+                              ? null
+                              : () async {
+                                  if (!sheetFormKey.currentState!.validate()) {
+                                    return;
+                                  }
+                                  setSheetState(() => isSending = true);
+                                  try {
+                                    await ref
+                                        .read(authRepositoryProvider)
+                                        .sendPasswordResetEmail(
+                                          resetEmailController.text.trim(),
+                                        );
+                                    if (sheetContext.mounted) {
+                                      Navigator.of(sheetContext).pop();
+                                    }
+                                    if (mounted) {
+                                      ErrorHandler.showSuccessSnackBar(
+                                        context,
+                                        'Reset link sent! Check your inbox.',
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setSheetState(() => isSending = false);
+                                    if (sheetContext.mounted) {
+                                      ErrorHandler.showErrorSnackBar(
+                                        sheetContext,
+                                        ErrorHandler.getErrorMessage(e),
+                                      );
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            minimumSize: const Size(double.infinity, 52),
+                          ),
+                          child: isSending
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text(
+                                  'Send Reset Link',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    resetEmailController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -212,13 +413,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                         child: TextButton(
                           onPressed: _isLoading
                               ? null
-                              : () {
-                                  // TODO: Implement forgot password
-                                  ErrorHandler.showInfoSnackBar(
-                                    context,
-                                    'Forgot password feature coming soon!',
-                                  );
-                                },
+                              : () => _forgotPassword(),
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,

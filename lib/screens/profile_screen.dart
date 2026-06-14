@@ -10,11 +10,13 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileConstants {
-  static const double avatarRadius = 55.0;
+  static const double avatarRadius = 60.0;
   static const double editAvatarRadius = 50.0;
   static const double spacing = 24.0;
   static const double cardSpacing = 16.0;
   static const double sectionSpacing = 32.0;
+  // How far the avatar overlaps below the header
+  static const double avatarOverlap = 44.0;
 }
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -124,118 +126,109 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               slivers: [
                 _buildSliverAppBar(theme, isDark, user),
                 SliverToBoxAdapter(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.topCenter,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: ProfileConstants.spacing),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 65), // Space for floating avatar
-                            
-                            // Username & Email
-                            Text(
-                              user.username,
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
-                                color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              user.email,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            // Member Since Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.primary),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Member since ${_formatDate(user.createdAt)}',
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: ProfileConstants.spacing),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Space for the avatar that overlaps from the SliverAppBar
+                        const SizedBox(height: ProfileConstants.avatarOverlap + 16),
 
-                            const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                            // Edit Profile Button
-                            _buildPrimaryButton(
-                              icon: Icons.edit_rounded,
-                              label: 'Edit Profile',
-                              onPressed: _isLoading ? null : _editProfile,
-                              theme: theme,
-                            ),
-
-                            const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                            // Privacy & Settings Section
-                            _buildSectionHeader('Privacy & Settings', theme, isDark),
-                            const SizedBox(height: ProfileConstants.cardSpacing),
-
-                            // Online Status Toggle
-                            _buildOnlineStatusCard(user.isOnline, theme, isDark),
-
-                            const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                            // Account Information Section
-                            _buildSectionHeader('Account Information', theme, isDark),
-                            const SizedBox(height: ProfileConstants.cardSpacing),
-
-                            _buildInfoCard(
-                              icon: Icons.person_rounded,
-                              title: 'Username',
-                              subtitle: user.username,
-                              iconColor: Colors.blue,
-                              theme: theme,
-                              isDark: isDark,
-                            ),
-
-                            const SizedBox(height: ProfileConstants.cardSpacing),
-
-                            _buildInfoCard(
-                              icon: Icons.email_rounded,
-                              title: 'Email',
-                              subtitle: user.email,
-                              iconColor: Colors.orange,
-                              theme: theme,
-                              isDark: isDark,
-                            ),
-                            
-                            const SizedBox(height: 48),
-                            
-                            // Logout Button
-                            _buildLogoutButton(theme, isDark),
-                            
-                            const SizedBox(height: 40),
-                          ],
+                        // Username & Email
+                        Text(
+                          user.username,
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                            color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
+                          ),
                         ),
-                      ),
-                      Positioned(
-                        top: -55,
-                        child: _buildAvatarSection(user, theme),
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Text(
+                          user.email,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Member Since Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.primary),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Member since ${_formatDate(user.createdAt)}',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: ProfileConstants.sectionSpacing),
+
+                        // Edit Profile Button
+                        _buildPrimaryButton(
+                          icon: Icons.edit_rounded,
+                          label: 'Edit Profile',
+                          onPressed: _isLoading ? null : _editProfile,
+                          theme: theme,
+                        ),
+
+                        const SizedBox(height: ProfileConstants.sectionSpacing),
+
+                        // Privacy & Settings Section
+                        _buildSectionHeader('Privacy & Settings', theme, isDark),
+                        const SizedBox(height: ProfileConstants.cardSpacing),
+
+                        // Online Status Toggle
+                        _buildOnlineStatusCard(user.isOnline, theme, isDark),
+
+                        const SizedBox(height: ProfileConstants.sectionSpacing),
+
+                        // Account Information Section
+                        _buildSectionHeader('Account Information', theme, isDark),
+                        const SizedBox(height: ProfileConstants.cardSpacing),
+
+                        _buildInfoCard(
+                          icon: Icons.person_rounded,
+                          title: 'Username',
+                          subtitle: user.username,
+                          iconColor: Colors.blue,
+                          theme: theme,
+                          isDark: isDark,
+                        ),
+
+                        const SizedBox(height: ProfileConstants.cardSpacing),
+
+                        _buildInfoCard(
+                          icon: Icons.email_rounded,
+                          title: 'Email',
+                          subtitle: user.email,
+                          iconColor: Colors.orange,
+                          theme: theme,
+                          isDark: isDark,
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Logout Button
+                        _buildLogoutButton(theme, isDark),
+
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -250,17 +243,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildSliverAppBar(ThemeData theme, bool isDark, dynamic user) {
     return SliverAppBar(
-      expandedHeight: 180,
+      expandedHeight: 220,
       pinned: true,
       stretch: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.colorScheme.primary,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [StretchMode.zoomBackground],
         background: Stack(
-          clipBehavior: Clip.none,
+          fit: StackFit.expand,
           children: [
-            // Gradient Background
+            // Gradient background
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -273,6 +266,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ],
                 ),
               ),
+            ),
+            // Avatar centered at the BOTTOM of the header, overlapping into content
+            Positioned(
+              bottom: -ProfileConstants.avatarRadius,
+              left: 0,
+              right: 0,
+              child: Center(child: _buildAvatarSection(user, theme)),
             ),
           ],
         ),

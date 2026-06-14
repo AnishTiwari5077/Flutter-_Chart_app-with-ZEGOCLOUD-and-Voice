@@ -66,7 +66,7 @@ class ZegoService {
       userID: userId,
       userName: userName,
       plugins: [ZegoUIKitSignalingPlugin()],
-      
+
       // Wire up Riverpod state with Zego events
       invitationEvents: ZegoUIKitPrebuiltCallInvitationEvents(
         onOutgoingCallSent: (callID, caller, callType, callees, customData) {
@@ -75,12 +75,13 @@ class ZegoService {
         onInvitationUserStateChanged: (userInfoList) {
           for (var user in userInfoList) {
             final stateStr = user.state.toString();
-            if (stateStr.contains('received') || stateStr.contains('notified')) {
+            if (stateStr.contains('received') ||
+                stateStr.contains('notified')) {
               globalCallStateController.updateState(CallState.ringing);
             } else if (stateStr.contains('accepted')) {
               globalCallStateController.updateState(CallState.connected);
-            } else if (stateStr.contains('rejected') || 
-                       stateStr.contains('cancelled')) {
+            } else if (stateStr.contains('rejected') ||
+                stateStr.contains('cancelled')) {
               globalCallStateController.updateState(CallState.ended);
             }
           }
@@ -97,9 +98,10 @@ class ZegoService {
         onOutgoingCallTimeout: (callID, callees, isVideoCall) {
           globalCallStateController.updateState(CallState.timeout);
         },
-        onIncomingCallReceived: (callID, caller, callType, callees, customData) {
-          globalCallStateController.updateState(CallState.ringing);
-        },
+        onIncomingCallReceived:
+            (callID, caller, callType, callees, customData) {
+              globalCallStateController.updateState(CallState.ringing);
+            },
         onIncomingCallCanceled: (callID, caller, customData) {
           globalCallStateController.updateState(CallState.ended);
         },
