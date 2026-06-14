@@ -1,5 +1,3 @@
-// lib/screens/profile/profile_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:new_chart/core/error_handler.dart';
@@ -11,12 +9,9 @@ import '../../theme/app_theme.dart';
 
 class ProfileConstants {
   static const double avatarRadius = 60.0;
-  static const double editAvatarRadius = 50.0;
   static const double spacing = 24.0;
   static const double cardSpacing = 16.0;
   static const double sectionSpacing = 32.0;
-  // How far the avatar overlaps below the header
-  static const double avatarOverlap = 44.0;
 }
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -56,8 +51,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         userId: currentUser.uid,
         isOnline: !currentStatus,
       );
-
-      // Refresh the user data
       ref.invalidate(currentUserProvider);
 
       if (mounted) {
@@ -114,123 +107,222 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       isLoading: _isLoading,
       message: 'Logging out...',
       child: Scaffold(
-        backgroundColor: isDark ? AppTheme.backgroundDark : AppTheme.backgroundLight,
+        backgroundColor: isDark
+            ? AppTheme.backgroundDark
+            : AppTheme.backgroundLight,
         body: currentUserAsync.when(
           data: (user) {
-            if (user == null) {
-              return _buildEmptyState(theme, isDark);
-            }
+            if (user == null) return _buildEmptyState(theme, isDark);
 
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-              slivers: [
-                _buildSliverAppBar(theme, isDark, user),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: ProfileConstants.spacing),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Space for the avatar that overlaps from the SliverAppBar
-                        const SizedBox(height: ProfileConstants.avatarOverlap + 16),
-
-                        // Username & Email
-                        Text(
-                          user.username,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                            color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user.email,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Member Since Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.primary),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Member since ${_formatDate(user.createdAt)}',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                        // Edit Profile Button
-                        _buildPrimaryButton(
-                          icon: Icons.edit_rounded,
-                          label: 'Edit Profile',
-                          onPressed: _isLoading ? null : _editProfile,
-                          theme: theme,
-                        ),
-
-                        const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                        // Privacy & Settings Section
-                        _buildSectionHeader('Privacy & Settings', theme, isDark),
-                        const SizedBox(height: ProfileConstants.cardSpacing),
-
-                        // Online Status Toggle
-                        _buildOnlineStatusCard(user.isOnline, theme, isDark),
-
-                        const SizedBox(height: ProfileConstants.sectionSpacing),
-
-                        // Account Information Section
-                        _buildSectionHeader('Account Information', theme, isDark),
-                        const SizedBox(height: ProfileConstants.cardSpacing),
-
-                        _buildInfoCard(
-                          icon: Icons.person_rounded,
-                          title: 'Username',
-                          subtitle: user.username,
-                          iconColor: Colors.blue,
-                          theme: theme,
-                          isDark: isDark,
-                        ),
-
-                        const SizedBox(height: ProfileConstants.cardSpacing),
-
-                        _buildInfoCard(
-                          icon: Icons.email_rounded,
-                          title: 'Email',
-                          subtitle: user.email,
-                          iconColor: Colors.orange,
-                          theme: theme,
-                          isDark: isDark,
-                        ),
-
-                        const SizedBox(height: 48),
-
-                        // Logout Button
-                        _buildLogoutButton(theme, isDark),
-
-                        const SizedBox(height: 40),
-                      ],
-                    ),
+            return Stack(
+              children: [
+                // ── Main scrollable content ──
+                CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
                   ),
+                  slivers: [
+                    // Gradient header — no avatar inside
+                    SliverAppBar(
+                      expandedHeight: 200,
+                      pinned: true,
+                      stretch: true,
+                      backgroundColor: theme.colorScheme.primary,
+                      elevation: 0,
+                      actions: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.logout_outlined,
+                            color: Colors.white,
+                          ),
+                          onPressed: _isLoading ? null : _logout,
+                          tooltip: 'Logout',
+                        ),
+                      ],
+                      flexibleSpace: FlexibleSpaceBar(
+                        stretchModes: const [StretchMode.zoomBackground],
+                        background: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primary.withValues(
+                                  alpha: 0.7,
+                                ),
+                                theme.colorScheme.secondary,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: ProfileConstants.spacing,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Space for avatar overlap
+                            const SizedBox(
+                              height: ProfileConstants.avatarRadius + 16,
+                            ),
+
+                            // Username
+                            Text(
+                              user.username,
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                                color: isDark
+                                    ? AppTheme.textPrimaryDark
+                                    : AppTheme.textPrimaryLight,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+
+                            // Email
+                            Text(
+                              user.email,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: isDark
+                                    ? AppTheme.textSecondaryDark
+                                    : AppTheme.textSecondaryLight,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Member Since Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 16,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Member since ${_formatDate(user.createdAt)}',
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: theme.colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(
+                              height: ProfileConstants.sectionSpacing,
+                            ),
+
+                            // Edit Profile Button
+                            _buildPrimaryButton(
+                              icon: Icons.edit_rounded,
+                              label: 'Edit Profile',
+                              onPressed: _isLoading ? null : _editProfile,
+                              theme: theme,
+                            ),
+
+                            const SizedBox(
+                              height: ProfileConstants.sectionSpacing,
+                            ),
+
+                            // Privacy & Settings
+                            _buildSectionHeader(
+                              'Privacy & Settings',
+                              theme,
+                              isDark,
+                            ),
+                            const SizedBox(
+                              height: ProfileConstants.cardSpacing,
+                            ),
+                            _buildOnlineStatusCard(
+                              user.isOnline,
+                              theme,
+                              isDark,
+                            ),
+
+                            const SizedBox(
+                              height: ProfileConstants.sectionSpacing,
+                            ),
+
+                            // Account Information
+                            _buildSectionHeader(
+                              'Account Information',
+                              theme,
+                              isDark,
+                            ),
+                            const SizedBox(
+                              height: ProfileConstants.cardSpacing,
+                            ),
+
+                            _buildInfoCard(
+                              icon: Icons.person_rounded,
+                              title: 'Username',
+                              subtitle: user.username,
+                              iconColor: Colors.blue,
+                              theme: theme,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(
+                              height: ProfileConstants.cardSpacing,
+                            ),
+
+                            _buildInfoCard(
+                              icon: Icons.email_rounded,
+                              title: 'Email',
+                              subtitle: user.email,
+                              iconColor: Colors.orange,
+                              theme: theme,
+                              isDark: isDark,
+                            ),
+                            const SizedBox(
+                              height: ProfileConstants.cardSpacing,
+                            ),
+
+                            _buildInfoCard(
+                              icon: Icons.calendar_today_rounded,
+                              title: 'Member Since',
+                              subtitle: _formatDate(user.createdAt),
+                              iconColor: Colors.purple,
+                              theme: theme,
+                              isDark: isDark,
+                            ),
+
+                            const SizedBox(height: 48),
+
+                            // Logout Button
+                            _buildLogoutButton(theme, isDark),
+
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+
+                // ── Avatar overlaid on top of everything ──
+                // Positioned independently — never clipped by SliverAppBar
+                _buildFloatingAvatar(user, theme),
               ],
             );
           },
@@ -241,93 +333,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSliverAppBar(ThemeData theme, bool isDark, dynamic user) {
-    return SliverAppBar(
-      expandedHeight: 220,
-      pinned: true,
-      stretch: true,
-      backgroundColor: theme.colorScheme.primary,
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        stretchModes: const [StretchMode.zoomBackground],
-        background: Stack(
-          fit: StackFit.expand,
+  // Avatar floats over the Stack — completely independent of scroll clipping
+  Widget _buildFloatingAvatar(dynamic user, ThemeData theme) {
+    return Positioned(
+      // 200 = expandedHeight of SliverAppBar
+      // avatarRadius = half avatar height
+      top: 200 - ProfileConstants.avatarRadius,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            // Gradient background
             Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.primary.withValues(alpha: 0.7),
-                    theme.colorScheme.secondary,
-                  ],
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: theme.scaffoldBackgroundColor,
+                  width: 4,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Hero(
+                tag: 'profile_avatar_${user.uid}',
+                child: UserAvatar(
+                  imageUrl: user.avatarUrl,
+                  radius: ProfileConstants.avatarRadius,
+                  showOnlineIndicator: false,
                 ),
               ),
             ),
-            // Avatar centered at the BOTTOM of the header, overlapping into content
+            // Camera button
             Positioned(
-              bottom: -ProfileConstants.avatarRadius,
-              left: 0,
-              right: 0,
-              child: Center(child: _buildAvatarSection(user, theme)),
+              bottom: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: _editProfile,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.scaffoldBackgroundColor,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAvatarSection(dynamic user, ThemeData theme) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: theme.scaffoldBackgroundColor, width: 4),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Hero(
-            tag: 'profile_avatar_${user.uid}',
-            child: UserAvatar(
-              imageUrl: user.avatarUrl,
-              radius: ProfileConstants.avatarRadius,
-              showOnlineIndicator: false,
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: _editProfile,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary,
-                shape: BoxShape.circle,
-                border: Border.all(color: theme.scaffoldBackgroundColor, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 18),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -360,65 +435,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              // Glowing Icon
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
-                  color: statusColor,
-                  size: 26,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(width: 16),
-              
-              // Text Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Online Status',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      isOnline ? 'Visible to all users' : 'Appear offline to others',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
-                      ),
-                    ),
-                  ],
-                ),
+              child: Icon(
+                isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
+                color: statusColor,
+                size: 26,
               ),
-              
-              // Custom Switch
-              _isTogglingStatus
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Switch.adaptive(
-                      value: isOnline,
-                      onChanged: _isTogglingStatus ? null : (value) => _toggleOnlineStatus(isOnline),
-                      activeThumbColor: Colors.green,
-                      activeTrackColor: Colors.green.withValues(alpha: 0.3),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Online Status',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppTheme.textPrimaryDark
+                          : AppTheme.textPrimaryLight,
                     ),
-            ],
-          ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isOnline
+                        ? 'Visible to all users'
+                        : 'Appear offline to others',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isDark
+                          ? AppTheme.textSecondaryDark
+                          : AppTheme.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _isTogglingStatus
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Switch.adaptive(
+                    value: isOnline,
+                    onChanged: _isTogglingStatus
+                        ? null
+                        : (value) => _toggleOnlineStatus(isOnline),
+                    activeThumbColor: Colors.green,
+                    activeTrackColor: Colors.green.withValues(alpha: 0.3),
+                  ),
+          ],
         ),
       ),
     );
@@ -464,7 +539,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text(
                     title,
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+                      color: isDark
+                          ? AppTheme.textSecondaryDark
+                          : AppTheme.textSecondaryLight,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -472,9 +549,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Text(
                     subtitle,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
+                      color: isDark
+                          ? AppTheme.textPrimaryDark
+                          : AppTheme.textPrimaryLight,
                       fontWeight: FontWeight.w700,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -497,10 +577,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
+          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
         ),
         boxShadow: [
           BoxShadow(
@@ -515,7 +592,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -547,7 +626,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           color: theme.colorScheme.error.withValues(alpha: 0.5),
           width: 1.5,
         ),
-        color: isDark ? Colors.transparent : theme.colorScheme.error.withValues(alpha: 0.05),
+        color: isDark
+            ? Colors.transparent
+            : theme.colorScheme.error.withValues(alpha: 0.05),
       ),
       child: InkWell(
         onTap: _isLoading ? null : _logout,
@@ -555,7 +636,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.logout_rounded, color: theme.colorScheme.error, size: 22),
+            Icon(
+              Icons.logout_rounded,
+              color: theme.colorScheme.error,
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Text(
               'Logout',
@@ -579,21 +664,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           Icon(
             Icons.person_off_rounded,
             size: 80,
-            color: isDark ? AppTheme.textSecondaryDark.withValues(alpha: 0.5) : AppTheme.textSecondaryLight.withValues(alpha: 0.5),
+            color: isDark
+                ? AppTheme.textSecondaryDark.withValues(alpha: 0.5)
+                : AppTheme.textSecondaryLight.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 20),
           Text(
             'User Not Found',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
+              color: isDark
+                  ? AppTheme.textPrimaryDark
+                  : AppTheme.textPrimaryLight,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Unable to load profile information',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+              color: isDark
+                  ? AppTheme.textSecondaryDark
+                  : AppTheme.textSecondaryLight,
             ),
           ),
         ],
@@ -625,14 +716,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               'Error Loading Profile',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
+                color: isDark
+                    ? AppTheme.textPrimaryDark
+                    : AppTheme.textPrimaryLight,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               ErrorHandler.getErrorMessage(error),
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+                color: isDark
+                    ? AppTheme.textSecondaryDark
+                    : AppTheme.textSecondaryLight,
               ),
               textAlign: TextAlign.center,
             ),
@@ -642,8 +737,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Retry'),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],
@@ -653,8 +753,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
