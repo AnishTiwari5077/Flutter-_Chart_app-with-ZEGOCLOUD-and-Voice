@@ -40,15 +40,11 @@ class FriendRequestService {
           .get();
       if (receiverDoc.exists) {
         final receiverData = UserModel.fromMap(receiverDoc.data()!);
-        await NotificationService.sendNotification(
-          token: receiverData.fcmToken,
-          title: 'New Friend Request',
-          body: '${currentUser.username} sent you a friend request',
-          data: {
-            'type': 'friend_request',
-            'senderId': currentUser.uid,
-            'requestId': requestId,
-          },
+        await NotificationService.sendFriendRequestNotification(
+          receiverToken: receiverData.fcmToken,
+          senderName: currentUser.username,
+          senderId: currentUser.uid,
+          requestId: requestId,
         );
       }
     } catch (e) {
@@ -94,15 +90,11 @@ class FriendRequestService {
       });
 
       if (senderData != null) {
-        await NotificationService.sendNotification(
-          token: senderData.fcmToken,
-          title: 'Friend Request Accepted',
-          body: '${currentUser.username} accepted your friend request',
-          data: {
-            'type': 'request_accepted',
-            'userId': currentUser.uid,
-            'chatId': chatId,
-          },
+        await NotificationService.sendRequestAcceptedNotification(
+          receiverToken: senderData.fcmToken,
+          acceptorName: currentUser.username,
+          acceptorId: currentUser.uid,
+          chatId: chatId,
         );
       }
     } catch (e) {
@@ -163,23 +155,6 @@ class FriendRequestService {
       }
       await requestBatch.commit();
 
-      final friendDoc = await _firestore
-          .collection('users')
-          .doc(friendId)
-          .get();
-      if (friendDoc.exists) {
-        final friendData = UserModel.fromMap(friendDoc.data()!);
-        await NotificationService.sendNotification(
-          token: friendData.fcmToken,
-          title: 'Friendship Ended',
-          body: '${currentUser.username} removed you from their friends list',
-          data: {
-            'type': 'unfriend',
-            'userId': currentUser.uid,
-            'chatId': chatId,
-          },
-        );
-      }
     } catch (e) {
       rethrow;
     }

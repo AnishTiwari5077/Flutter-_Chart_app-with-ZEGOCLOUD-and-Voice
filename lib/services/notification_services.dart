@@ -7,6 +7,20 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../core/env_config.dart';
 
+// =============================================================================
+// NotificationService
+//
+// All push notifications are sent through the Node.js FCM backend
+// (node_js/fcm-backend/fcm-backend/server.js).
+//
+// Endpoints used:
+//   POST /send-message          – chat messages
+//   POST /send-friend-request   – new friend requests
+//   POST /send-request-accepted – accepted friend requests
+//   POST /send-unfriend         – unfriend events
+//   POST /send-call             – voice/video call (data-only, ZEGOCLOUD)
+//   POST /send-notification     – generic fallback
+// =============================================================================
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -20,13 +34,18 @@ class NotificationService {
     playSound: true,
     enableVibration: true,
   );
+
   static bool _isInitialized = false;
 
-  // Get backend URL from environment config
+  /// Base URL of the running Node.js backend, e.g. http://192.168.1.x:3000
   static String get _backendUrl => EnvConfig.notificationBackendUrl;
 
-  // Tracks which chatId the user is currently viewing.
-  // When set, foreground notifications for that chat are suppressed.
+  // ---------------------------------------------------------------------------
+  // Active-chat suppression
+  // ---------------------------------------------------------------------------
+
+  /// Tracks which chatId the user is currently viewing.
+  /// When set, foreground notifications for that chat are suppressed.
   static String? _activeChatId;
 
   /// Call this when the user enters a conversation screen.
@@ -41,15 +60,23 @@ class NotificationService {
     _activeChatId = null;
   }
 
-  // Callback for navigation when notification is tapped
+  // ---------------------------------------------------------------------------
+  // Navigation callback
+  // ---------------------------------------------------------------------------
+
+  /// Set this in main.dart to navigate when a notification is tapped.
   static Function(String chatId, String friendId, String friendUsername)?
-  onNotificationTap;
+      onNotificationTap;
+
+  // ---------------------------------------------------------------------------
+  // Initialization
+  // ---------------------------------------------------------------------------
 
   static Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      NotificationSettings settings = await _messaging.requestPermission(
+      final NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -64,13 +91,11 @@ class NotificationService {
 
       await _localNotifications
           .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(_channel);
 
-      const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
-      );
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -98,22 +123,19 @@ class NotificationService {
 
       _isInitialized = true;
       debugPrint('✅ NotificationService initialized');
-      debugPrint('📍 Backend URL: $_backendUrl');
+      debugPrint('📍 Node.js backend: $_backendUrl');
     } catch (e) {
       debugPrint('❌ NotificationService initialization failed: $e');
-      if (kDebugMode) {
-        rethrow;
-      }
+      if (kDebugMode) rethrow;
     }
   }
 
-  // Lightweight init for killed-state background isolates.
-  // Skips requestPermission() which can stall when there is no Activity context.
+  /// Lightweight init for killed-state background isolates.
+  /// Skips requestPermission() which can stall when there is no Activity.
   static Future<void> initializeForBackground() async {
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
     const initSettings = InitializationSettings(
@@ -122,20 +144,25 @@ class NotificationService {
     await _localNotifications.initialize(settings: initSettings);
   }
 
+  // ---------------------------------------------------------------------------
+  // Foreground / tap handlers
+  // ---------------------------------------------------------------------------
+
   static Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('📩 Foreground message received: ${message.data}');
 
-    // Suppress notification if user is already viewing the chat that sent this message
+    // Suppress if user is already in the chat that sent this message
     final chatId = message.data['chatId'] as String?;
     if (chatId != null && chatId == _activeChatId) {
       debugPrint('🔕 Suppressing notification — user is in chat: $chatId');
       return;
     }
 
-    // Also suppress call-type notifications in foreground — ZEGOCLOUD handles those
+    // Suppress call-type notifications — ZEGOCLOUD handles those in-app
     final type = message.data['type'] as String?;
     if (type == 'call') {
-      debugPrint('🔕 Suppressing call notification in foreground — ZEGOCLOUD handles it');
+      debugPrint(
+          '🔕 Suppressing call notification in foreground — ZEGOCLOUD handles it');
       return;
     }
 
@@ -146,13 +173,13 @@ class NotificationService {
     final notification = message.notification;
     final data = message.data;
 
-    // Use notification object if available, otherwise fallback to data payload
-    final title =
-        notification?.title ??
+    // Prefer notification object; fall back to data payload fields
+    final title = notification?.title ??
         data['title'] ??
         data['senderName'] ??
         'New Message';
-    final body = notification?.body ?? data['body'] ?? data['message'] ?? '';
+    final body =
+        notification?.body ?? data['body'] ?? data['message'] ?? '';
 
     if (!kIsWeb) {
       final androidDetails = AndroidNotificationDetails(
@@ -196,46 +223,41 @@ class NotificationService {
   static void _onNotificationTapped(NotificationResponse response) {
     if (response.payload != null) {
       try {
-        final data = jsonDecode(response.payload!);
+        final data = jsonDecode(response.payload!) as Map<String, dynamic>;
         _processNotificationData(data);
       } catch (e) {
         debugPrint('❌ Error processing notification tap: $e');
-        if (kDebugMode) {
-          rethrow;
-        }
+        if (kDebugMode) rethrow;
       }
     }
   }
 
   static void _processNotificationData(Map<String, dynamic> data) {
-    final type = data['type'];
+    final type = data['type'] as String?;
 
     switch (type) {
       case 'message':
         final chatId = data['chatId'] as String?;
         final senderId = data['senderId'] as String?;
         final senderName = data['senderName'] as String?;
-
         if (chatId != null && senderId != null && senderName != null) {
           debugPrint('📱 Navigating to chat: $chatId');
           onNotificationTap?.call(chatId, senderId, senderName);
         }
         break;
       case 'friend_request':
-        debugPrint('👥 Friend request notification');
+        debugPrint('👥 Friend request notification tapped');
         break;
       case 'request_accepted':
-        debugPrint('✅ Friend request accepted notification');
+        debugPrint('✅ Friend request accepted notification tapped');
         break;
-
       default:
         debugPrint('❓ Unknown notification type: $type');
-        break;
     }
   }
 
   static Future<void> _handleTokenRefresh(String newToken) async {
-    debugPrint('FCM token refreshed — updating Firestore');
+    debugPrint('🔄 FCM token refreshed — updating Firestore');
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
@@ -243,13 +265,21 @@ class NotificationService {
             .collection('users')
             .doc(currentUser.uid)
             .update({'fcmToken': newToken});
-        debugPrint('FCM token updated in Firestore for: ${currentUser.uid}');
+        debugPrint('✅ FCM token updated for: ${currentUser.uid}');
       }
     } catch (e) {
-      debugPrint('Failed to update FCM token in Firestore: $e');
+      debugPrint('❌ Failed to update FCM token: $e');
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // NODE.JS BACKEND SENDERS
+  // All methods below POST to the Node.js server which uses Firebase Admin SDK
+  // to send FCM messages — no direct FCM HTTP calls from Flutter.
+  // ---------------------------------------------------------------------------
+
+  /// POST /send-message
+  /// Sends a chat message push notification via the Node.js backend.
   static Future<bool> sendMessageNotification({
     required String receiverToken,
     required String senderName,
@@ -257,90 +287,106 @@ class NotificationService {
     required String chatId,
     required String senderId,
   }) async {
-    try {
-      if (_backendUrl.isEmpty) {
-        debugPrint('Backend URL not configured — set NOTIFICATION_BACKEND_URL in dart_defines.json');
-        return false;
-      }
-
-      debugPrint('📤 Sending notification to backend: $_backendUrl');
-
-      final headers = <String, String>{'Content-Type': 'application/json'};
-
-      final payload = {
-        'token': receiverToken,
-        'title': senderName,
-        'body': messageContent,
-        'data': {
-          'type': 'message',
-          'chatId': chatId,
-          'senderId': senderId,
-          'senderName': senderName,
-        },
-      };
-
-      final response = await http
-          .post(
-            Uri.parse('$_backendUrl/send-notification'),
-            headers: headers,
-            body: jsonEncode(payload),
-          )
-          .timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        debugPrint('✅ Notification sent successfully');
-        debugPrint('   Response: ${response.body}');
-        return true;
-      } else {
-        debugPrint('❌ Notification failed with status: ${response.statusCode}');
-        debugPrint('   Response: ${response.body}');
-        return false;
-      }
-    } catch (e) {
-      debugPrint('Error sending notification: $e');
-      if (e.toString().contains('SocketException') ||
-          e.toString().contains('Connection')) {
-        debugPrint('  Check: backend is running, NOTIFICATION_BACKEND_URL in dart_defines.json is correct, device is on same network');
-      }
-      return false;
-    }
+    return _post('/send-message', {
+      'token'     : receiverToken,
+      'senderName': senderName,
+      'senderId'  : senderId,
+      'chatId'    : chatId,
+      'body'      : messageContent,
+    });
   }
 
+  /// POST /send-friend-request
+  /// Sends a friend-request push notification via the Node.js backend.
+  static Future<bool> sendFriendRequestNotification({
+    required String receiverToken,
+    required String senderName,
+    required String senderId,
+    required String requestId,
+  }) async {
+    return _post('/send-friend-request', {
+      'token'     : receiverToken,
+      'senderName': senderName,
+      'senderId'  : senderId,
+      'requestId' : requestId,
+    });
+  }
+
+  /// POST /send-request-accepted
+  /// Notifies a user that their friend request was accepted.
+  static Future<bool> sendRequestAcceptedNotification({
+    required String receiverToken,
+    required String acceptorName,
+    required String acceptorId,
+    required String chatId,
+  }) async {
+    return _post('/send-request-accepted', {
+      'token'       : receiverToken,
+      'acceptorName': acceptorName,
+      'acceptorId'  : acceptorId,
+      'chatId'      : chatId,
+    });
+  }
+
+  /// POST /send-notification  (generic fallback — backward compatible)
   static Future<bool> sendNotification({
     required String token,
     required String title,
     required String body,
     Map<String, String>? data,
   }) async {
+    return _post('/send-notification', {
+      'token': token,
+      'title': title,
+      'body' : body,
+      'data' : data ?? {},
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // HTTP helper — all requests go through here
+  // ---------------------------------------------------------------------------
+
+  static Future<bool> _post(String endpoint, Map<String, dynamic> payload) async {
     try {
       if (_backendUrl.isEmpty) {
-        debugPrint('❌ Backend URL not configured');
+        debugPrint(
+            '❌ Backend URL not configured — set NOTIFICATION_BACKEND_URL in dart_defines.json');
         return false;
       }
 
-      final headers = <String, String>{'Content-Type': 'application/json'};
-
-      final payload = {
-        'token': token,
-        'title': title,
-        'body': body,
-        'data': data ?? {},
-      };
+      final url = Uri.parse('$_backendUrl$endpoint');
+      debugPrint('📤 POST $url');
 
       final response = await http
           .post(
-            Uri.parse('$_backendUrl/send-notification'),
-            headers: headers,
+            url,
+            headers: const {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 10));
 
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        debugPrint('✅ $endpoint succeeded: ${response.body}');
+        return true;
+      } else {
+        debugPrint('❌ $endpoint failed [${response.statusCode}]: ${response.body}');
+        return false;
+      }
     } catch (e) {
-      debugPrint('❌ Error sending notification: $e');
+      debugPrint('❌ $endpoint error: $e');
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection')) {
+        debugPrint(
+            '  → Check: backend is running, NOTIFICATION_BACKEND_URL is correct, device is on same network');
+      }
       return false;
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Misc
+  // ---------------------------------------------------------------------------
 
   static Future<RemoteMessage?> getInitialMessage() async {
     try {
