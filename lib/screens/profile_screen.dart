@@ -114,64 +114,69 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           data: (user) {
             if (user == null) return _buildEmptyState(theme, isDark);
 
-            return Stack(
-              children: [
-                // ── Main scrollable content ──
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                    // Gradient header — no avatar inside
-                    SliverAppBar(
-                      expandedHeight: 200,
-                      pinned: true,
-                      stretch: true,
-                      backgroundColor: theme.colorScheme.primary,
-                      elevation: 0,
-                      actions: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.logout_outlined,
-                            color: Colors.white,
-                          ),
-                          onPressed: _isLoading ? null : _logout,
-                          tooltip: 'Logout',
-                        ),
-                      ],
-                      flexibleSpace: FlexibleSpaceBar(
-                        stretchModes: const [StretchMode.zoomBackground],
-                        background: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primary.withValues(
-                                  alpha: 0.7,
-                                ),
-                                theme.colorScheme.secondary,
-                              ],
-                            ),
-                          ),
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                // ── Gradient header ──
+                SliverAppBar(
+                  expandedHeight: 200,
+                  pinned: true,
+                  stretch: true,
+                  backgroundColor: theme.colorScheme.primary,
+                  elevation: 0,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.logout_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: _isLoading ? null : _logout,
+                      tooltip: 'Logout',
+                    ),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    background: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.primary,
+                            theme.colorScheme.primary.withValues(alpha: 0.7),
+                            theme.colorScheme.secondary,
+                          ],
                         ),
                       ),
                     ),
+                  ),
+                ),
 
-                    SliverToBoxAdapter(
-                      child: Padding(
+                // ── Content ──
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      // Avatar scrolls with content, overlapping the header bottom.
+                      // Transform.translate(-avatarRadius) pulls it up by exactly
+                      // half its height so it straddles the header/content boundary.
+                      Transform.translate(
+                        offset: const Offset(0, -ProfileConstants.avatarRadius),
+                        child: Center(child: _buildAvatarWidget(user, theme)),
+                      ),
+
+                      // Negative margin compensates for the upward translate so
+                      // subsequent content isn't pushed down by a gap.
+                      const SizedBox(height: -ProfileConstants.avatarRadius + 16),
+
+                      Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: ProfileConstants.spacing,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Space for avatar overlap
-                            const SizedBox(
-                              height: ProfileConstants.avatarRadius + 16,
-                            ),
-
                             // Username
                             Text(
                               user.username,
@@ -203,9 +208,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.1,
-                                ),
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -221,17 +225,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     'Member since ${_formatDate(user.createdAt)}',
                                     style: theme.textTheme.labelMedium
                                         ?.copyWith(
-                                          color: theme.colorScheme.primary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
 
                             const SizedBox(
-                              height: ProfileConstants.sectionSpacing,
-                            ),
+                                height: ProfileConstants.sectionSpacing),
 
                             // Edit Profile Button
                             _buildPrimaryButton(
@@ -242,37 +245,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
 
                             const SizedBox(
-                              height: ProfileConstants.sectionSpacing,
-                            ),
+                                height: ProfileConstants.sectionSpacing),
 
                             // Privacy & Settings
                             _buildSectionHeader(
-                              'Privacy & Settings',
-                              theme,
-                              isDark,
-                            ),
-                            const SizedBox(
-                              height: ProfileConstants.cardSpacing,
-                            ),
+                                'Privacy & Settings', theme, isDark),
+                            const SizedBox(height: ProfileConstants.cardSpacing),
                             _buildOnlineStatusCard(
-                              user.isOnline,
-                              theme,
-                              isDark,
-                            ),
+                                user.isOnline, theme, isDark),
 
                             const SizedBox(
-                              height: ProfileConstants.sectionSpacing,
-                            ),
+                                height: ProfileConstants.sectionSpacing),
 
                             // Account Information
                             _buildSectionHeader(
-                              'Account Information',
-                              theme,
-                              isDark,
-                            ),
-                            const SizedBox(
-                              height: ProfileConstants.cardSpacing,
-                            ),
+                                'Account Information', theme, isDark),
+                            const SizedBox(height: ProfileConstants.cardSpacing),
 
                             _buildInfoCard(
                               icon: Icons.person_rounded,
@@ -282,9 +270,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               theme: theme,
                               isDark: isDark,
                             ),
-                            const SizedBox(
-                              height: ProfileConstants.cardSpacing,
-                            ),
+                            const SizedBox(height: ProfileConstants.cardSpacing),
 
                             _buildInfoCard(
                               icon: Icons.email_rounded,
@@ -294,9 +280,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               theme: theme,
                               isDark: isDark,
                             ),
-                            const SizedBox(
-                              height: ProfileConstants.cardSpacing,
-                            ),
+                            const SizedBox(height: ProfileConstants.cardSpacing),
 
                             _buildInfoCard(
                               icon: Icons.calendar_today_rounded,
@@ -316,13 +300,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-
-                // ── Avatar overlaid on top of everything ──
-                // Positioned independently — never clipped by SliverAppBar
-                _buildFloatingAvatar(user, theme),
               ],
             );
           },
@@ -333,76 +313,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Avatar floats over the Stack — completely independent of scroll clipping
-  Widget _buildFloatingAvatar(dynamic user, ThemeData theme) {
-    return Positioned(
-      // 200 = expandedHeight of SliverAppBar
-      // avatarRadius = half avatar height
-      top: 200 - ProfileConstants.avatarRadius,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
+  // ── Avatar widget (scrolls with content) ──
+  Widget _buildAvatarWidget(dynamic user, ThemeData theme) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: theme.scaffoldBackgroundColor,
+              width: 4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Hero(
+            tag: 'profile_avatar_${user.uid}',
+            child: UserAvatar(
+              imageUrl: user.avatarUrl,
+              radius: ProfileConstants.avatarRadius,
+              showOnlineIndicator: false,
+            ),
+          ),
+        ),
+        // Camera button
+        Positioned(
+          bottom: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: _editProfile,
+            child: Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
+                color: theme.colorScheme.secondary,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: theme.scaffoldBackgroundColor,
-                  width: 4,
+                  width: 3,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Hero(
-                tag: 'profile_avatar_${user.uid}',
-                child: UserAvatar(
-                  imageUrl: user.avatarUrl,
-                  radius: ProfileConstants.avatarRadius,
-                  showOnlineIndicator: false,
-                ),
+              child: const Icon(
+                Icons.camera_alt_rounded,
+                color: Colors.white,
+                size: 18,
               ),
             ),
-            // Camera button
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: GestureDetector(
-                onTap: _editProfile,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondary,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.scaffoldBackgroundColor,
-                      width: 3,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -754,18 +725,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
