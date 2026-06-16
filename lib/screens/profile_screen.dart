@@ -168,7 +168,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                       // Negative margin compensates for the upward translate so
                       // subsequent content isn't pushed down by a gap.
-                      const SizedBox(height: -ProfileConstants.avatarRadius + 16),
+                      // Transform.translate is purely visual and does not affect
+                      // layout, so no gap compensation is needed here.
+                      // A negative SizedBox height causes BoxConstraints errors.
+                      const SizedBox(height: 0),
 
                       Padding(
                         padding: const EdgeInsets.symmetric(

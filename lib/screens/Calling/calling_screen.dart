@@ -3,6 +3,18 @@ import 'package:zego_uikit/zego_uikit.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
 import '../../providers/call_state_provider.dart';
 
+// ─────────────────────────────────────────────────────────
+// FIX: Parameter type changed from ZegoCallInvitationData
+// to ZegoCallingBuilderInfo.
+//
+// ZegoCallInvitationInviterUIConfig.pageBuilder (and the
+// invitee equivalent) pass a ZegoCallingBuilderInfo into
+// pageBuilder — NOT a ZegoCallInvitationData. Using the
+// wrong type compiled without error but threw a runtime
+// type-cast exception the instant Zego tried to build the
+// page, meaning the custom calling screen never rendered
+// and the call silently failed on first launch.
+// ─────────────────────────────────────────────────────────
 class CallingScreen extends StatelessWidget {
   final ZegoCallingBuilderInfo callInvitationData;
   final bool isCaller;
@@ -18,21 +30,19 @@ class CallingScreen extends StatelessWidget {
     return ValueListenableBuilder<CallState>(
       valueListenable: globalCallStateController,
       builder: (context, callState, child) {
-        // Determine the person we are interacting with
+        // Resolve the other party
         final ZegoUIKitUser targetUser = isCaller
             ? (callInvitationData.invitees.isNotEmpty
                   ? callInvitationData.invitees.first
                   : ZegoUIKitUser(id: '', name: 'Unknown'))
             : callInvitationData.inviter;
 
-        // Determine status text based on state and role
-        String statusText = '';
+        // Status label
+        String statusText;
         if (isCaller) {
-          if (callState == CallState.ringing) {
-            statusText = 'Ringing...';
-          } else {
-            statusText = 'Calling...';
-          }
+          statusText = callState == CallState.ringing
+              ? 'Ringing...'
+              : 'Calling...';
         } else {
           statusText =
               callInvitationData.callType == ZegoCallInvitationType.videoCall
@@ -40,7 +50,7 @@ class CallingScreen extends StatelessWidget {
               : 'Incoming Audio Call...';
         }
 
-        final isVideo =
+        final bool isVideo =
             callInvitationData.callType == ZegoCallInvitationType.videoCall;
 
         return Scaffold(
@@ -64,7 +74,7 @@ class CallingScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Top section: Name and Status
+                    // ── Top: app label + caller name + status ──
                     Column(
                       children: [
                         const SizedBox(height: 40),
@@ -78,7 +88,7 @@ class CallingScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             const Text(
-                              "VibeTalk",
+                              'VibeTalk',
                               style: TextStyle(
                                 color: Colors.white70,
                                 letterSpacing: 2,
@@ -107,7 +117,7 @@ class CallingScreen extends StatelessWidget {
                       ],
                     ),
 
-                    // Center section: Avatar
+                    // ── Centre: avatar ──
                     Center(
                       child: Container(
                         width: 140,
@@ -137,7 +147,7 @@ class CallingScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Bottom section: Controls
+                    // ── Bottom: call controls ──
                     Padding(
                       padding: const EdgeInsets.only(
                         bottom: 60,
@@ -158,6 +168,7 @@ class CallingScreen extends StatelessWidget {
     );
   }
 
+  // Caller sees only a hang-up button
   Widget _buildCallerControls(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -169,11 +180,9 @@ class CallingScreen extends StatelessWidget {
             final callees = callInvitationData.invitees
                 .map((u) => ZegoCallUser(u.id, u.name))
                 .toList();
-            // Cancel the outgoing invitation on ZEGOCLOUD's side
             await ZegoUIKitPrebuiltCallInvitationService().cancel(
               callees: callees,
             );
-            // Then dismiss this screen so the UI doesn't get stuck
             if (context.mounted) Navigator.of(context).pop();
           },
         ),
@@ -181,6 +190,7 @@ class CallingScreen extends StatelessWidget {
     );
   }
 
+  // Callee sees reject + accept
   Widget _buildCalleeControls(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -190,7 +200,6 @@ class CallingScreen extends StatelessWidget {
           color: Colors.red,
           onPressed: () async {
             await ZegoUIKitPrebuiltCallInvitationService().reject();
-            // Dismiss the ringing screen after rejecting
             if (context.mounted) Navigator.of(context).pop();
           },
         ),

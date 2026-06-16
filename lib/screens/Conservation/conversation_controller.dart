@@ -416,24 +416,35 @@ class ConversationController {
     required String senderId,
   }) async {
     try {
-      // Get receiver's data from Firestore
-      final receiverDoc = await _firestore
-          .collection('users')
-          .doc(receiverId)
-          .get();
+      // Prefer the already-loaded FCM token from the friend model to avoid
+      // an extra Firestore round-trip on every single message. Fall back to
+      // Firestore only when the cached token is empty (e.g., stale model).
+      String? receiverToken = friend.fcmToken.isNotEmpty ? friend.fcmToken : null;
+      bool isReceiverOnline = friend.isOnline;
+      String? receiverChatId = friend.typingInChatId;
 
-      if (!receiverDoc.exists) {
-        debugPrint('❌ Receiver not found in Firestore');
-        return;
+      if (receiverToken == null) {
+        debugPrint('⚠️ FCM token not in model — fetching from Firestore');
+        final receiverDoc = await _firestore
+            .collection('users')
+            .doc(receiverId)
+            .get();
+
+        if (!receiverDoc.exists) {
+          debugPrint('❌ Receiver not found in Firestore');
+          return;
+        }
+
+        final receiverData = receiverDoc.data();
+        if (receiverData == null) {
+          debugPrint('❌ Receiver data is null');
+          return;
+        }
+
+        receiverToken = receiverData['fcmToken'] as String?;
+        isReceiverOnline = receiverData['isOnline'] == true;
+        receiverChatId = receiverData['typingInChatId'] as String?;
       }
-
-      final receiverData = receiverDoc.data();
-      if (receiverData == null) {
-        debugPrint('❌ Receiver data is null');
-        return;
-      }
-
-      final receiverToken = receiverData['fcmToken'] as String?;
 
       if (receiverToken == null || receiverToken.isEmpty) {
         debugPrint('❌ Receiver has no FCM token');
@@ -444,14 +455,9 @@ class ConversationController {
         '📱 Receiver token found: ${receiverToken.substring(0, 20)}...',
       );
 
-      // Check if receiver is online and currently in this chat
-      final isReceiverOnline = receiverData['isOnline'] == true;
-      final isReceiverTyping = receiverData['isTyping'] == true;
-      final receiverChatId = receiverData['typingInChatId'] as String?;
-
+      // Only send notification if receiver is not currently viewing this chat
       final isReceiverInThisChat = isReceiverOnline && receiverChatId == chatId;
 
-      // Only send notification if receiver is not currently in this chat
       if (!isReceiverInThisChat) {
         debugPrint('📤 Sending push notification...');
 
@@ -470,13 +476,10 @@ class ConversationController {
         }
       } else {
         debugPrint('⏭️ Skipping notification - receiver is in chat');
-        debugPrint('   - isOnline: $isReceiverOnline');
-        debugPrint('   - isTyping: $isReceiverTyping');
-        debugPrint('   - inChatId: $receiverChatId');
       }
     } catch (e) {
       debugPrint('❌ Error sending push notification: $e');
-      // Don't throw - notification failure shouldn't stop message sending
+      // Don’t throw - notification failure shouldn’t stop message sending
     }
   }
 
@@ -561,77 +564,105 @@ class ConversationController {
     }
   }
 
-  // Make audio call
-  Future<void> makeAudioCall() async {
-    final currentUser = ref.read(currentUserProvider).value;
-    if (currentUser == null) return;
-
-    if (!ZegoService.isInitialized) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Call service not ready yet')),
-        );
+  // ─── shared helper ───────────────────────────────────────────────────────
+  /// Waits up to [timeoutSeconds] for Zego to finish initialising.
+  /// Returns true when ready, false if it timed out.
+  Future<bool> _waitForZego({int timeoutSeconds = 6}) async {
+    debugPrint(
+      '⏳ [ZEGO] isInitialized=${ZegoService.isInitialized} — waiting up to ${timeoutSeconds}s…',
+    );
+    final deadline = DateTime.now().add(Duration(seconds: timeoutSeconds));
+    while (!ZegoService.isInitialized) {
+      if (DateTime.now().isAfter(deadline)) {
+        debugPrint('❌ [ZEGO] Timed out waiting for init.');
+        return false;
       }
-      return;
+      await Future.delayed(const Duration(milliseconds: 300));
     }
-
-    final callID = '${chatId}_${DateTime.now().millisecondsSinceEpoch}';
-
-    try {
-      await ZegoUIKitPrebuiltCallInvitationService().send(
-        invitees: [ZegoCallUser(friend.uid, friend.username)],
-        isVideoCall: false,
-        resourceID: "zego_call",
-        callID: callID,
-        // These appear in the ZEGOCLOUD UI overlay on the callee side
-        notificationTitle: currentUser.username,
-        notificationMessage: '${currentUser.username} is calling you...',
-      );
-      debugPrint('📞 Audio call sent to: ${friend.username} (${friend.uid})');
-    } catch (e) {
-      debugPrint('❌ Audio call error: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to start call')));
-      }
-    }
+    debugPrint('✅ [ZEGO] Ready.');
+    return true;
   }
 
-  // Make video call
-  Future<void> makeVideoCall() async {
-    final currentUser = ref.read(currentUserProvider).value;
-    if (currentUser == null) return;
+  // ─── Call helpers ──────────────────────────────────────────────────────────
 
-    if (!ZegoService.isInitialized) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Call service not ready yet')),
-        );
-      }
+  /// Public entry points — kept separate so the UI can call them by name.
+  Future<void> makeAudioCall() => _makeCall(isVideo: false);
+  Future<void> makeVideoCall() => _makeCall(isVideo: true);
+
+  /// Shared implementation for both audio and video calls.
+  /// Extracted to remove ~60 lines of duplicated guard + send logic.
+  Future<void> _makeCall({required bool isVideo}) async {
+    final callLabel = isVideo ? '🎥 VIDEO' : '📞 AUDIO';
+    debugPrint('$callLabel [CALL] makeCall(isVideo=$isVideo) tapped');
+
+    final currentUser = ref.read(currentUserProvider).value;
+    debugPrint('👤 [CALL] currentUser=${currentUser?.uid}');
+    if (currentUser == null) {
+      debugPrint('❌ [CALL] currentUser is null — aborting');
       return;
     }
 
+    debugPrint('🔍 [CALL] ZegoService.isInitialized=${ZegoService.isInitialized}');
+
+    if (!ZegoService.isInitialized) {
+      try {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Connecting call service…'),
+              duration: Duration(seconds: 6),
+            ),
+          );
+        }
+      } catch (_) {}
+
+      final ready = await _waitForZego();
+
+      try {
+        if (context.mounted) ScaffoldMessenger.of(context).clearSnackBars();
+      } catch (_) {}
+
+      if (!ready) {
+        try {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Call service failed to start. Please restart the app.'),
+              ),
+            );
+          }
+        } catch (_) {}
+        return;
+      }
+    }
+
     final callID = '${chatId}_${DateTime.now().millisecondsSinceEpoch}';
+    debugPrint('$callLabel [CALL] Sending → callID=$callID friend=${friend.uid}');
 
     try {
       await ZegoUIKitPrebuiltCallInvitationService().send(
         invitees: [ZegoCallUser(friend.uid, friend.username)],
-        isVideoCall: true,
-        resourceID: "zego_call",
+        isVideoCall: isVideo,
+        resourceID: 'zego_call',
         callID: callID,
-        // These appear in the ZEGOCLOUD UI overlay on the callee side
         notificationTitle: currentUser.username,
-        notificationMessage: '${currentUser.username} is video calling you...',
+        notificationMessage: isVideo
+            ? '${currentUser.username} is video calling you…'
+            : '${currentUser.username} is calling you…',
       );
-      debugPrint('🎥 Video call sent to: ${friend.username} (${friend.uid})');
-    } catch (e) {
-      debugPrint('❌ Video call error: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to start video call')),
-        );
-      }
+      debugPrint('✅ [CALL] ${isVideo ? 'Video' : 'Audio'} call sent to: ${friend.username} (${friend.uid})');
+    } catch (e, st) {
+      debugPrint('❌ [CALL] Call error: $e\n$st');
+      // Guard: ScaffoldMessenger.of(context) can throw even when
+      // context.mounted is true if the scaffold deactivated when
+      // the call screen launched. Swallow that secondary throw.
+      try {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to start call: $e')),
+          );
+        }
+      } catch (_) {}
     }
   }
 }
