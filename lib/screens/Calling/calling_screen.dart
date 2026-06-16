@@ -170,8 +170,9 @@ class CallingScreen extends StatelessWidget {
                 .map((u) => ZegoCallUser(u.id, u.name))
                 .toList();
             // Cancel the outgoing invitation on ZEGOCLOUD's side
-            await ZegoUIKitPrebuiltCallInvitationService()
-                .cancel(callees: callees);
+            await ZegoUIKitPrebuiltCallInvitationService().cancel(
+              callees: callees,
+            );
             // Then dismiss this screen so the UI doesn't get stuck
             if (context.mounted) Navigator.of(context).pop();
           },
