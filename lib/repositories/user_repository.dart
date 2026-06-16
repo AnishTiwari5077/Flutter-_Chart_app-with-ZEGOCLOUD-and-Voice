@@ -8,7 +8,14 @@ class UserRepository {
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       if (doc.exists && doc.data() != null) {
         try {
-          return UserModel.fromMap(doc.data()!);
+          // FIX: Always inject doc.id as 'uid'.
+          // The Firestore document ID IS the Firebase Auth uid (guaranteed).
+          // If the 'uid' field inside the document data is empty or missing
+          // (a data creation bug), ZegoService.init() received an empty userId
+          // and Zego silently rejected the call with "user parameters is not valid".
+          final data = Map<String, dynamic>.from(doc.data()!);
+          data['uid'] = doc.id;
+          return UserModel.fromMap(data);
         } catch (e) {
           return null;
         }
@@ -108,15 +115,13 @@ class UserRepository {
   }
 
   Future<UserModel?> getUser(String uid) async {
-    try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      if (doc.exists && doc.data() != null) {
-        return UserModel.fromMap(doc.data()!);
-      }
-      return null;
-    } catch (e) {
-      rethrow;
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (doc.exists && doc.data() != null) {
+      final data = Map<String, dynamic>.from(doc.data()!);
+      data['uid'] = doc.id; // FIX: always use authoritative doc id
+      return UserModel.fromMap(data);
     }
+    return null;
   }
 
   Stream<List<UserModel>> getAllUsers(String currentUserId) {
@@ -128,7 +133,9 @@ class UserRepository {
           return snapshot.docs
               .map((doc) {
                 try {
-                  return UserModel.fromMap(doc.data());
+                  final data = Map<String, dynamic>.from(doc.data());
+                  data['uid'] = doc.id; // FIX: always use authoritative doc id
+                  return UserModel.fromMap(data);
                 } catch (e) {
                   return null;
                 }
@@ -151,7 +158,9 @@ class UserRepository {
           return snapshot.docs
               .map((doc) {
                 try {
-                  return UserModel.fromMap(doc.data());
+                  final data = Map<String, dynamic>.from(doc.data());
+                  data['uid'] = doc.id; // FIX: always use authoritative doc id
+                  return UserModel.fromMap(data);
                 } catch (e) {
                   return null;
                 }
@@ -163,11 +172,7 @@ class UserRepository {
   }
 
   Future<void> updateUser(String uid, Map<String, dynamic> data) async {
-    try {
-      await _firestore.collection('users').doc(uid).update(data);
-    } catch (e) {
-      rethrow;
-    }
+    await _firestore.collection('users').doc(uid).update(data);
   }
 
   Future<void> updateUsername(String uid, String username) async {
