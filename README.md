@@ -102,8 +102,8 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/AnishTiwari5077/Flutter-_Chart_app-with-ZEGOCLOUD-and-Voice.git
-cd Flutter-_Chart_app-with-ZEGOCLOUD-and-Voice
+git clone https://github.com/AnishTiwari5077/VibeTalk.git
+cd VibeTalk
 ```
 
 ### 2. Install Dependencies
