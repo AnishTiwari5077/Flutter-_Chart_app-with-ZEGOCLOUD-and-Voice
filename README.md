@@ -1,4 +1,4 @@
-# 💬 MyChart — Professional Flutter Chat Application
+# 💬 VibeTalk — Professional Flutter Chat Application
 
 A **feature-rich, real-time messaging application** built with **Flutter**, **Firebase**, and **Riverpod**. MyChart delivers seamless communication with text messages, voice notes, media sharing, video/audio calls, message reactions, and more.
 
