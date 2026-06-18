@@ -130,7 +130,7 @@ class NotificationService {
       );
 
       await _localNotifications.initialize(
-        settings: initSettings,
+        initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
@@ -169,7 +169,7 @@ class NotificationService {
     const initSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
-    await _localNotifications.initialize(settings: initSettings);
+    await _localNotifications.initialize(initSettings);
   }
 
   // ---------------------------------------------------------------------------
@@ -257,10 +257,10 @@ class NotificationService {
       }
 
       await _localNotifications.show(
-        id: message.hashCode,
-        title: title,
-        body: body,
-        notificationDetails: details,
+        message.hashCode,
+        title,
+        body,
+        details,
         payload: jsonEncode(message.data),
       );
     }
@@ -468,11 +468,34 @@ class NotificationService {
   // Misc
   // ---------------------------------------------------------------------------
 
+  /// Called when the app is launched from a KILLED state by tapping a
+  /// local notification (background-handler-shown call notification).
+  /// `onDidReceiveNotificationResponse` does NOT fire in that scenario —
+  /// `getNotificationAppLaunchDetails` is the correct API.
+  static Future<void> checkNotificationLaunchDetails() async {
+    try {
+      final details =
+          await _localNotifications.getNotificationAppLaunchDetails();
+      if (details?.didNotificationLaunchApp == true) {
+        final payload = details?.notificationResponse?.payload;
+        if (payload != null && payload.isNotEmpty) {
+          debugPrint('📲 App launched from local notification: $payload');
+          final data = jsonDecode(payload) as Map<String, dynamic>;
+          _processNotificationData(data);
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ checkNotificationLaunchDetails error: $e');
+    }
+  }
+
+  /// Checks Firebase for a message that launched the app from killed state
+  /// (when FCM delivers a notification+data message and the OS shows it).
   static Future<RemoteMessage?> getInitialMessage() async {
     try {
       final message = await _messaging.getInitialMessage();
       if (message != null) {
-        debugPrint('📬 Initial message: ${message.data}');
+        debugPrint('📬 Initial FCM message: ${message.data}');
         _processNotificationData(message.data);
       }
       return message;

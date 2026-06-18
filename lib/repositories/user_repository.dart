@@ -8,26 +8,19 @@ class UserRepository {
     return _firestore.collection('users').doc(uid).snapshots().map((doc) {
       if (doc.exists && doc.data() != null) {
         try {
-          // FIX: Always inject doc.id as 'uid'.
-          // The Firestore document ID IS the Firebase Auth uid (guaranteed).
-          // If the 'uid' field inside the document data is empty or missing
-          // (a data creation bug), ZegoService.init() received an empty userId
-          // and Zego silently rejected the call with "user parameters is not valid".
+          // Always inject the Firestore document ID as 'uid'.
+          // The doc ID IS the Firebase Auth uid (guaranteed by auth_repository).
+          // The 'uid' field inside the document may be empty on a partial
+          // Firestore snapshot (e.g., fresh install merge-write triggers a
+          // local optimistic snapshot with only 3 fields before the full
+          // server document arrives). Using doc.id avoids that stale state.
           final data = Map<String, dynamic>.from(doc.data()!);
           data['uid'] = doc.id;
           final userModel = UserModel.fromMap(data);
 
-          // FIX: Guard against partial Firestore snapshots.
-          // On every fresh install (uninstall + reinstall), signInWithEmailAndPassword
-          // calls set({isOnline, fcmToken, lastSeen}, merge: true) AFTER Firebase Auth
-          // fires authStateChanges. The Firestore listener is already active at that
-          // point, so the merge write triggers a LOCAL optimistic snapshot containing
-          // only those 3 fields — username and email are null because local cache was
-          // wiped on uninstall. This caused:
-          //   1. Zego init with empty userName → _pageManager null → call crash
-          //   2. Profile screen flicker with blank Username/Email cards
-          // Returning null here makes currentUserProvider yield null, which keeps
-          // auth_wrapper on SplashScreen until the full server document arrives.
+          // Guard against partial snapshots (username/email null):
+          // Returning null keeps auth_wrapper on SplashScreen until the
+          // full server document arrives with all required fields.
           if (userModel.username.isEmpty || userModel.email.isEmpty) {
             return null;
           }

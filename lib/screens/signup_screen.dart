@@ -313,7 +313,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   // Sign Up Button
                   CustomButton(
                     text: AppStrings.signUp,
-                    onPressed: _isLoading ? () {} : _signUp,
+                    onPressed: _isLoading ? null : _signUp,
                     isLoading: _isLoading,
                   ),
 

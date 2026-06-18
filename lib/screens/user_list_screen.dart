@@ -251,7 +251,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchController.clear();
-                          ref.read(searchQueryProvider.notifier).state = '';
+                          ref.read(searchQueryProvider.notifier).clear();
                           setState(() {});
                         },
                       )
@@ -268,7 +268,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                 ),
               ),
               onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state = value;
+                ref.read(searchQueryProvider.notifier).set(value);
                 setState(() {});
               },
             ),

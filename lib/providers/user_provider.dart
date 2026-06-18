@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart' show StateProvider;
 import '../models/user_model.dart';
 
 import 'auth_provider.dart';
@@ -36,7 +35,20 @@ final allUsersProvider = StreamProvider<List<UserModel>>((ref) async* {
   }
 });
 
-final searchQueryProvider = StateProvider<String>((ref) => '');
+// Search query state — uses NotifierProvider (recommended Riverpod v2 pattern).
+// Exposes explicit set() / clear() methods instead of raw .state mutation.
+class SearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String query) => state = query;
+  void clear() => state = '';
+}
+
+final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
+  SearchQueryNotifier.new,
+);
+
 
 final filteredUsersProvider = StreamProvider<List<UserModel>>((ref) async* {
   final query = ref.watch(searchQueryProvider);

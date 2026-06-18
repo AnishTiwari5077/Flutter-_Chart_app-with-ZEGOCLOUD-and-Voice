@@ -74,10 +74,12 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await _requestAllPermissions();
-  await _ensureFcmTokenReady();
   await NotificationService.initialize();
 
   runApp(const ProviderScope(child: MyApp()));
+
+  // Warm-up FCM token in background — don't block runApp
+  _ensureFcmTokenReady();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -101,6 +103,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationService.onNotificationTap = _handleNotificationTap;
       NotificationService.onCallNotificationTap = _handleCallNotificationTap;
+      // Check both paths for killed-state notification launches:
+      //   1. Local notification shown by background handler → checkNotificationLaunchDetails
+      //   2. FCM notification+data message → getInitialMessage
+      NotificationService.checkNotificationLaunchDetails();
       NotificationService.getInitialMessage();
     });
   }

@@ -4,6 +4,7 @@ import 'package:vibetalk/core/error_handler.dart';
 import 'package:vibetalk/widgets/loading_overlay.dart';
 import 'package:vibetalk/widgets/profile_edit_dialog.dart';
 import 'package:vibetalk/widgets/user_avatar.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 
@@ -114,10 +115,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           data: (user) {
             if (user == null) return _buildEmptyState(theme, isDark);
 
-            // FIX: Firestore emits an intermediate snapshot on first launch
-            // where username and email are '' (cache race, same root cause
-            // as the Zego call bug). Treat this as still-loading so the
-            // profile cards never flicker with blank values.
+            // Guard against partial Firestore snapshots:
+            // Firestore emits an intermediate snapshot on first launch where
+            // username and email are still '' (cache race condition). Show a
+            // spinner until the full server document arrives.
             if (user.username.isEmpty || user.email.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -368,7 +369,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // ── Avatar widget (scrolls with content) ──
-  Widget _buildAvatarWidget(dynamic user, ThemeData theme) {
+  Widget _buildAvatarWidget(UserModel user, ThemeData theme) {
     return Stack(
       clipBehavior: Clip.none,
       children: [

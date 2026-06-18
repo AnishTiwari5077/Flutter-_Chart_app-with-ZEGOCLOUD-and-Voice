@@ -8,13 +8,14 @@
 //   POST /send-request-accepted   – friend request accepted notification
 //   POST /send-notification       – generic fallback (kept for backward compatibility)
 //
-//   NOTE: Call notifications use /send-call which sends both notification
-//         + data payload so the device wakes even in killed/terminated state.
+//   NOTE: Call notifications use /send-call which sends a DATA-ONLY
+//         high-priority FCM payload so the device wakes even in killed state.
 
 const express    = require('express');
 const admin      = require('firebase-admin');
 const bodyParser = require('body-parser');
 const cors       = require('cors');
+const rateLimit  = require('express-rate-limit');
 
 // =======================
 // CONFIG
@@ -26,7 +27,17 @@ const PORT = process.env.PORT || 3000;
 // =======================
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());  // replaces deprecated body-parser
+
+// Rate limit: max 30 requests per minute per IP
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests, please try again later.' },
+});
+app.use(limiter);
 
 // Request logger
 app.use((req, res, next) => {
@@ -120,9 +131,10 @@ app.get('/', (req, res) => {
 // =======================
 // Body: { token, callerName, callId, isVideo }
 //
-// Sends a high-priority FCM message with BOTH a notification payload
-// (so the OS shows a system-tray notification when the app is killed)
-// AND a data payload (so the Flutter app can open IncomingCallScreen).
+// Sends a DATA-ONLY high-priority FCM message.
+// Data-only ensures _firebaseMessagingBackgroundHandler fires on Android
+// in every state (killed / background / foreground). The handler then
+// shows a local fullScreenIntent notification so it behaves like a call UI.
 app.post('/send-call', async (req, res) => {
   try {
     const { token, callerName, callId, isVideo } = req.body;

@@ -54,16 +54,12 @@ class AuthService {
   AuthService(this.ref);
 
   Future<void> logout() async {
-    try {
-      // Sign out from Firebase first
-      await ref.read(authRepositoryProvider).signOut();
+    // Sign out from Firebase first
+    await ref.read(authRepositoryProvider).signOut();
 
-      // Invalidate all providers to clean up listeners
-      ref.invalidate(currentUserProvider);
-      ref.invalidate(authStateProvider);
-    } catch (e) {
-      rethrow;
-    }
+    // Invalidate all providers to clean up listeners
+    ref.invalidate(currentUserProvider);
+    ref.invalidate(authStateProvider);
   }
 }
 
