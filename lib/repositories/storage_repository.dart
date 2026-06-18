@@ -60,48 +60,6 @@ class StorageRepository {
     }
   }
 
-  /// Upload avatar — alias kept for backward compat (progress not supported
-  /// by cloudinary_public; use uploadAvatar instead).
-  Future<String> uploadAvatarWithProgress(
-    String uid,
-    File file, [
-    // ignore: avoid_unused_parameters
-    void Function(int sent, int total)? onProgress,
-  ]) async {
-    try {
-      debugPrint('📤 Starting avatar upload with progress for user: $uid');
-
-      if (!await file.exists()) {
-        throw Exception('Image file does not exist');
-      }
-
-      // Same 150 MB guard as uploadAvatar
-      final fileSize = await file.length();
-      const maxImageBytes = 150 * 1024 * 1024;
-      if (fileSize > maxImageBytes) {
-        throw Exception(
-          'Avatar image is too large (${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB). '
-          'Maximum allowed size is 150 MB.',
-        );
-      }
-
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final response = await _cloudinary.uploadFile(
-        CloudinaryFile.fromFile(
-          file.path,
-          folder: 'avatars/$uid',
-          publicId: 'profile_$timestamp',
-          resourceType: CloudinaryResourceType.Image,
-        ),
-      );
-
-      debugPrint('✅ Avatar uploaded');
-      return response.secureUrl;
-    } catch (e) {
-      debugPrint('❌ Upload error: $e');
-      rethrow;
-    }
-  }
 
   /// Upload chat media (images, videos, voice messages)
   Future<String> uploadChatMedia({

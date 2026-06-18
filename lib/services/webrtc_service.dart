@@ -395,6 +395,9 @@ class WebRtcService {
   }
 
   /// Watches Firestore for incoming calls where calleeId == currentUserId.
+  /// Only emits calls created within the last 90 seconds to prevent stale
+  /// call documents from triggering IncomingCallScreen on app restart.
+  /// The staleness check is done client-side to avoid a composite index.
   static Stream<CallModel?> watchIncomingCalls(String currentUserId) {
     return FirebaseFirestore.instance
         .collection('calls')
@@ -405,7 +408,12 @@ class WebRtcService {
         .snapshots()
         .map((snap) {
       if (snap.docs.isEmpty) return null;
-      return CallModel.fromMap(snap.docs.first.data());
+      final call = CallModel.fromMap(snap.docs.first.data());
+      // Client-side staleness guard: ignore calls older than 90 s
+      final age = DateTime.now().difference(call.createdAt);
+      if (age.inSeconds > 90) return null;
+      return call;
     });
   }
+
 }

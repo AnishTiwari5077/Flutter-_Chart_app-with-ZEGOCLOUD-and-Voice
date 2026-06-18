@@ -210,20 +210,22 @@ class ConversationController {
   // Pick video from gallery
   Future<File?> pickVideoFromGallery() async {
     try {
-      debugPrint('Starting video picker...');
+      if (kDebugMode) debugPrint('Starting video picker...');
       final video = await ImagePickerService.pickVideoFromGallery();
 
-      if (video != null) {
-        final fileSize = await video.length();
-        debugPrint('Video picked successfully: ${video.path}');
-        debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
-      } else {
-        debugPrint('No video selected');
+      if (kDebugMode) {
+        if (video != null) {
+          final fileSize = await video.length();
+          debugPrint('Video picked: ${video.path}');
+          debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
+        } else {
+          debugPrint('No video selected');
+        }
       }
 
       return video;
     } catch (e) {
-      debugPrint('Error in pickVideoFromGallery: $e');
+      if (kDebugMode) debugPrint('Error in pickVideoFromGallery: $e');
       if (context.mounted) {
         ErrorHandler.showErrorSnackBar(
           context,
@@ -237,20 +239,22 @@ class ConversationController {
   // Pick video from camera
   Future<File?> pickVideoFromCamera() async {
     try {
-      debugPrint('Starting video camera...');
+      if (kDebugMode) debugPrint('Starting video camera...');
       final video = await ImagePickerService.pickVideoFromCamera();
 
-      if (video != null) {
-        final fileSize = await video.length();
-        debugPrint('Video recorded successfully: ${video.path}');
-        debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
-      } else {
-        debugPrint('No video recorded');
+      if (kDebugMode) {
+        if (video != null) {
+          final fileSize = await video.length();
+          debugPrint('Video recorded: ${video.path}');
+          debugPrint('Video size: ${fileSize / (1024 * 1024)} MB');
+        } else {
+          debugPrint('No video recorded');
+        }
       }
 
       return video;
     } catch (e) {
-      debugPrint('Error in pickVideoFromCamera: $e');
+      if (kDebugMode) debugPrint('Error in pickVideoFromCamera: $e');
       if (context.mounted) {
         ErrorHandler.showErrorSnackBar(
           context,
@@ -374,7 +378,7 @@ class ConversationController {
         fileName: file.path.split('/').last,
       );
 
-      debugPrint('${type.name} message sent successfully');
+      if (kDebugMode) debugPrint('${type.name} message sent successfully');
 
       // Send push notification with appropriate emoji
       final notificationContent = type == MessageType.image
@@ -397,8 +401,10 @@ class ConversationController {
         );
       }
     } catch (e) {
-      debugPrint('Error sending ${type.name} message: $e');
-      debugPrint('Error stack trace: ${StackTrace.current}');
+      if (kDebugMode) {
+        debugPrint('Error sending ${type.name} message: $e');
+        debugPrint('Error stack trace: ${StackTrace.current}');
+      }
       if (context.mounted) {
         ErrorHandler.showErrorSnackBar(
           context,

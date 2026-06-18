@@ -60,10 +60,10 @@ class MessageModel {
 
   factory MessageModel.fromMap(Map<String, dynamic> map) {
     return MessageModel(
-      messageId: map['messageId'] as String,
-      senderId: map['senderId'] as String,
-      receiverId: map['receiverId'] as String,
-      content: map['content'] as String,
+      messageId: map['messageId'] as String? ?? '',
+      senderId: map['senderId'] as String? ?? '',
+      receiverId: map['receiverId'] as String? ?? '',
+      content: map['content'] as String? ?? '',
       type: MessageType.values.firstWhere(
         (e) => e.toString().split('.').last == map['type'],
         orElse: () => MessageType.text,

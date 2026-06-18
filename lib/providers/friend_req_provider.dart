@@ -117,21 +117,27 @@ class FriendRequestService {
 
       final chatId = _generateChatId(currentUser.uid, friendId);
 
-      await _firestore.collection('chats').doc(chatId).delete();
-
+      // 1. Delete messages subcollection FIRST (before parent doc).
+      //    Firestore subcollections survive parent deletion, so reversing the
+      //    order would leave orphaned messages if the batch below fails.
       final messagesSnapshot = await _firestore
           .collection('chats')
           .doc(chatId)
           .collection('messages')
           .get();
 
-      final batch = _firestore.batch();
-      for (var doc in messagesSnapshot.docs) {
-        batch.delete(doc.reference);
+      if (messagesSnapshot.docs.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (var doc in messagesSnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
       }
-      await batch.commit();
 
-      // Run both queries in parallel — halves Firestore round-trip time.
+      // 2. Delete the parent chat document.
+      await _firestore.collection('chats').doc(chatId).delete();
+
+      // 3. Remove friend request records (both directions) in parallel.
       final results = await Future.wait([
         _firestore
             .collection('friendRequests')
@@ -143,14 +149,11 @@ class FriendRequestService {
             .get(),
       ]);
 
-      final query1 = results[0];
-      final query2 = results[1];
-
       final requestBatch = _firestore.batch();
-      for (var doc in query1.docs) {
+      for (var doc in results[0].docs) {
         if (doc.data()['receiverId'] == friendId) requestBatch.delete(doc.reference);
       }
-      for (var doc in query2.docs) {
+      for (var doc in results[1].docs) {
         if (doc.data()['receiverId'] == currentUser.uid) requestBatch.delete(doc.reference);
       }
       await requestBatch.commit();

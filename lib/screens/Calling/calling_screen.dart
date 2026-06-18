@@ -104,7 +104,8 @@ class _CallingScreenState extends State<CallingScreen>
       }
     });
 
-    // Also watch the Firestore document directly for status changes
+    // Also watch the Firestore document directly — catches cases where the
+    // callee rejects via Firestore but the callStatus stream didn't fire.
     _callDocSub = WebRtcService.watchCall(widget.call.callId).listen((call) {
       if (!mounted || call == null) return;
       if (call.status == 'ended' || call.status == 'rejected') {
@@ -112,12 +113,24 @@ class _CallingScreenState extends State<CallingScreen>
       }
     });
 
+    // Auto-cancel: if nobody answers in 60 seconds, hang up.
+    if (widget.isCaller) {
+      Future.delayed(const Duration(seconds: 60), () {
+        if (mounted && !_isEnding && !_remoteConnected) {
+          debugPrint('⏰ [CallingScreen] Auto-cancel: no answer after 60s');
+          _endCallAndPop();
+        }
+      });
+    }
+
     try {
       if (widget.isCaller) {
         await _webrtc.createCall(
           callId: widget.call.callId,
           isVideo: widget.call.isVideo,
         );
+        // Offer written — callee can now see the call.
+        if (mounted) setState(() => _statusLabel = 'Ringing...');
       } else {
         await _webrtc.joinCall(
           callId: widget.call.callId,

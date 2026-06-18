@@ -25,10 +25,10 @@ class FriendRequest {
 
   factory FriendRequest.fromMap(Map<String, dynamic> map) {
     return FriendRequest(
-      id: map['id'] as String,
-      senderId: map['senderId'] as String,
-      receiverId: map['receiverId'] as String,
-      status: map['status'] as String,
+      id: map['id'] as String? ?? '',
+      senderId: map['senderId'] as String? ?? '',
+      receiverId: map['receiverId'] as String? ?? '',
+      status: map['status'] as String? ?? 'pending',
       timestamp: _parseTimestamp(map['timestamp']),
     );
   }

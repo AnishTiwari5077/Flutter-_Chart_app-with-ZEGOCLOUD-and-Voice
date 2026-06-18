@@ -210,7 +210,6 @@ class ChatService {
       });
 
       await batch.commit();
-      //   _sendNotificationAsync(receiverId, currentUser, type, content, chatId);
     } catch (e) {
       rethrow;
     }
@@ -366,7 +365,10 @@ class ChatService {
     }
   }
 
+  /// Generates a deterministic, collision-free chat ID for two users.
+  /// Uses lexicographic comparison (compareTo) — guaranteed stable across
+  /// all Dart VM versions, unlike hashCode which is implementation-specific.
   String generateChatId(String uid1, String uid2) {
-    return uid1.hashCode <= uid2.hashCode ? '${uid1}_$uid2' : '${uid2}_$uid1';
+    return uid1.compareTo(uid2) <= 0 ? '${uid1}_$uid2' : '${uid2}_$uid1';
   }
 }
