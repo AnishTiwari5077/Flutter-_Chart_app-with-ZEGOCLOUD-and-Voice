@@ -301,6 +301,71 @@ class _CallingScreenState extends State<CallingScreen>
     }
   } // end _onBackPressed
 
+  /// Circular avatar: shows the real Cloudinary photo when [avatarUrl] is
+  /// available, immediately falls back to an initials circle while loading
+  /// or when offline. No spinner — the initials are the placeholder.
+  Widget _buildAvatar({required String name, String? avatarUrl}) {
+    const double size = 130;
+    final initials = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    final Widget photo = avatarUrl != null && avatarUrl.isNotEmpty
+        ? ClipOval(
+            child: Image.network(
+              avatarUrl,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              // Show initials while loading (no CircularProgressIndicator)
+              loadingBuilder: (ctx, child, progress) {
+                if (progress == null) return child;
+                return _initialsCircle(initials, size);
+              },
+              errorBuilder: (ctx, _, stack) => _initialsCircle(initials, size),
+            ),
+          )
+        : _initialsCircle(initials, size);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryLight.withValues(alpha: 0.45),
+            blurRadius: 32,
+            spreadRadius: 10,
+          ),
+        ],
+      ),
+      child: photo,
+    );
+  }
+
+  Widget _initialsCircle(String initials, double size) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.primaryLight.withValues(alpha: 0.8),
+              AppTheme.primaryLight.withValues(alpha: 0.3),
+            ],
+          ),
+        ),
+        child: Center(
+          child: Text(
+            initials,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 56,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+
   Widget _buildRemoteView() {
     // Only show RTCVideoView once ICE has truly connected.
     // Before that, RTCVideoView shows a black rectangle —
@@ -332,36 +397,12 @@ class _CallingScreenState extends State<CallingScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Avatar circle
-              Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      AppTheme.primaryLight.withValues(alpha: 0.8),
-                      AppTheme.primaryLight.withValues(alpha: 0.3),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryLight.withValues(alpha: 0.4),
-                      blurRadius: 30,
-                      spreadRadius: 8,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 56,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              // Avatar: real photo when available, initials fallback
+              _buildAvatar(
+                name: name,
+                avatarUrl: widget.isCaller
+                    ? widget.call.calleeAvatarUrl
+                    : widget.call.callerAvatarUrl,
               ),
               const SizedBox(height: 28),
               Text(
