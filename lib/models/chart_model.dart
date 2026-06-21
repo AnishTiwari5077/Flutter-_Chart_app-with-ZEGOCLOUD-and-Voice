@@ -7,9 +7,6 @@ class ChatModel {
   final DateTime? lastMessageTime;
   final Map<String, int> unreadCount;
   final Map<String, Map<String, dynamic>>? participantsData;
-  /// UIDs of users who have soft-deleted this chat.
-  /// The chat is hidden only for users whose UID appears in this list.
-  final List<String> deletedFor;
 
   ChatModel({
     required this.chatId,
@@ -18,7 +15,6 @@ class ChatModel {
     this.lastMessageTime,
     required this.unreadCount,
     this.participantsData,
-    this.deletedFor = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -29,7 +25,6 @@ class ChatModel {
       'lastMessageTime': lastMessageTime?.millisecondsSinceEpoch,
       'unreadCount': unreadCount,
       'participantsData': participantsData,
-      'deletedFor': deletedFor,
     };
   }
 
@@ -43,9 +38,6 @@ class ChatModel {
       lastMessageTime: _parseDate(map['lastMessageTime']),
       unreadCount: _parseUnread(map['unreadCount']),
       participantsData: _parseParticipantsData(map['participantsData']),
-      deletedFor: List<String>.from(
-        (map['deletedFor'] ?? []).map((e) => e.toString()),
-      ),
     );
   }
 
