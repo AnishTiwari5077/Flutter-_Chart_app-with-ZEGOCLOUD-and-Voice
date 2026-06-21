@@ -8,10 +8,29 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vibetalk/models/call_model.dart';
 import 'package:vibetalk/screens/Calling/calling_screen.dart';
 import 'package:vibetalk/services/webrtc_service.dart';
 import 'package:vibetalk/theme/app_theme.dart';
+
+// MethodChannel declared in MainActivity.kt → configureFlutterEngine.
+// Moves the app task to the background so the lock screen returns after
+// a call ends, instead of revealing the home screen.
+const _windowChannel = MethodChannel('vibetalk/window');
+
+/// Checks if the keyguard is locked and, if so, moves the task to the
+/// background. Called when a call is declined or cancelled so the user
+/// isn't left looking at the home screen with the phone still locked.
+Future<void> _moveToBackgroundIfLocked() async {
+  try {
+    final locked =
+        await _windowChannel.invokeMethod<bool>('isLocked') ?? false;
+    if (locked) await _windowChannel.invokeMethod('moveToBackground');
+  } catch (_) {
+    // Non-fatal — worst case the user sees the home screen briefly.
+  }
+}
 
 class IncomingCallScreen extends StatefulWidget {
   final CallModel call;
@@ -71,7 +90,10 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
       if (call?.status == 'ended' || call?.status == 'rejected') {
         _isNavigating = true;
         _stopRingtone();
-        Navigator.of(context).pop();
+        // Caller hung up — return to lock screen if phone was locked.
+        _moveToBackgroundIfLocked().then((_) {
+          if (mounted) Navigator.of(context).pop();
+        });
       }
     });
 
@@ -148,11 +170,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   Future<void> _reject() async {
     if (_isNavigating) return;
     _isNavigating = true;
-    // Cancel FIRST so the listener doesn't try to pop() again when
-    // rejectCall() sets status: 'rejected' in Firestore.
     _callDocSub?.cancel();
     await _stopRingtone();
     await WebRtcService.instance.rejectCall(widget.call.callId);
+    // Return to lock screen if phone was locked when the call arrived.
+    await _moveToBackgroundIfLocked();
     if (mounted) Navigator.of(context).pop();
   }
 
